@@ -44,8 +44,8 @@ function scrapeLinkedInProfile() {
     licenses: []
   };
 
-  // Get name
-  const nameElement = document.querySelector('h1.text-heading-xlarge');
+  // Updated name selector
+  const nameElement = document.querySelector('h1.RIbnCAsTbWzbdDScQkPGXRrQHSaITKZWQhh');
   if (nameElement) profileData.name = nameElement.textContent.trim();
 
   // Get headline
@@ -67,32 +67,14 @@ function scrapeLinkedInProfile() {
   // if (experienceElement) profileData.experience = experienceElement.textContent.trim();
 
   // Get education section
-  
-  const educationList = document.querySelector('#education')?.closest('section')?.querySelector('.display-flex.ph5.pv3 .full-width[dir="ltr"] span[aria-hidden="true"]');
-
-  console.log('educationList: ', educationList);
-  
-  if (educationList) {
-    profileData.education = educationList.textContent.trim();
+  const educationSection = document.querySelector('#education')?.closest('section');
+  if (educationSection) {
+    const educationTitle = educationSection.querySelector('.display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]');
+    
+    if (educationTitle) {
+      profileData.education = educationTitle.textContent.trim();
+    }
   }
-
-  
-
-  /*if (educationList?.length) {
-    profileData.education = Array.from(educationList).map(item => {
-      const schoolName = item.querySelector('.hoverable-link-text.t-bold')?.textContent.trim();
-      const degree = item.querySelector('.t-14.t-normal span')?.textContent.trim();
-      const date = item.querySelector('.t-14.t-normal.t-black--light span')?.textContent.trim();
-      const activities = item.querySelector('.inline-show-more-text--is-collapsed')?.textContent.trim();
-      
-      return {
-        schoolName,
-        degree,
-        date,
-        activities
-      };
-    }).filter(edu => edu.schoolName); // Filter out any empty entries
-  }*/
 
   // Get skills section
   const skillsElement = document.querySelector('#skills-section'); // TODO: Add selector for skills section

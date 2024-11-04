@@ -1,0 +1,33 @@
+.profileButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0077b5;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.profile-data {
+  padding: 15px;
+  width: 300px;
+}
+
+.data-field {
+  margin-bottom: 10px;
+}
+
+.data-field h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.data-field p {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.hidden {
+  display: none;
+}

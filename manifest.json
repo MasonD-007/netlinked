@@ -1,0 +1,15 @@
+{
+	"name": "NetLinked",
+	"description": "Generate personalized LinkedIn connection messages using AI",
+	"version": "1.0",
+	"manifest_version": 3,
+	"action": {
+		"default_popup": "popup.html",
+		"default_icon": "netlinked.png"
+	},
+	"permissions": ["activeTab", "scripting"],
+	"host_permissions": ["https://*.linkedin.com/*"],
+	"background": {
+		"service_worker": "background.js"
+	}
+}

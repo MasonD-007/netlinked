@@ -7,9 +7,9 @@
 		"default_popup": "popup.html",
 		"default_icon": "netlinked.png"
 	},
-	"permissions": ["activeTab", "scripting"],
+	"permissions": ["activeTab", "scripting", "storage"],
 	"host_permissions": ["https://*.linkedin.com/*"],
-	"background": {
-		"service_worker": "background.js"
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'self'"
 	}
 }

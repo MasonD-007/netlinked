@@ -32,13 +32,16 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
 
 // Profile scraping function that will run in the context of the LinkedIn page
 function scrapeLinkedInProfile() {
+
+  const profileURL = window.location.href;
   const profileData = {
     name: '',
     headline: '',
     location: '',
     about: '',
     experience: [],
-    education: '',
+    education: [],
+    educationDegree: '',
     skills: [],
     projects: [],
     licenses: []
@@ -66,19 +69,54 @@ function scrapeLinkedInProfile() {
   // const experienceElement = document.querySelector('#experience-section'); // TODO: Add selector for experience section
   // if (experienceElement) profileData.experience = experienceElement.textContent.trim();
 
-  // Get education section
-  const educationSection = document.querySelector('#education')?.closest('section');
-  if (educationSection) {
-    const educationTitle = educationSection.querySelector('.display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]');
-    
-    if (educationTitle) {
-      profileData.education = educationTitle.textContent.trim();
+  // Get education section (DONE)
+  const educationSectionList = document.querySelector('#education')?.closest('section')?.querySelectorAll('li');
+
+  for (const educationItem of educationSectionList) {
+    const educationTitle = educationItem.querySelector('.display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]');
+    const educationDegree = educationItem.querySelector('.t-14.t-normal span[aria-hidden="true"]');
+    const educationDate = educationItem.querySelector('.pvs-entity__caption-wrapper[aria-hidden="true"]');
+    const descriptionList = educationItem.querySelectorAll('.duTEzRGpnMXXCujBXGnBBnCkmIYjEVxUPiZzwBdM.pvs-entity__sub-components li span[aria-hidden="true"]');
+    let educationDescription = '';
+    for (const descriptionItem of descriptionList) {
+      educationDescription += descriptionItem.textContent.trim() + '\n';
+    }
+            
+    if (educationTitle && educationDegree) {
+      profileData.education.push({
+        schoolName: educationTitle.textContent.trim(),
+        degree: educationDegree.textContent.trim(),
+        date: educationDate.textContent.trim(),
+        description: educationDescription
+      });
+    } else {
+      console.error('Education title or degree not found');
     }
   }
 
-  // Get skills section
-  const skillsElement = document.querySelector('#skills-section'); // TODO: Add selector for skills section
-  if (skillsElement) profileData.skills = skillsElement.textContent.trim();
+  //open skills page
+  /*if (!window.location.href.includes('/details/skills')) {
+    // If not on skills page, navigate to it
+    window.location.href = profileURL + '/details/skills';
+    return null;
+  }
+
+  // Get skills section (Open go to (user.url)/details/skills to see the whole skills section to scrape)
+  const skillsPage = document.querySelector('a[href="/details/skills"]');
+  const skillsList = skillsPage?.closest('.MzcESiLIKvHKWArcmskFayUaFtNohnClzMPnc')?.querySelectorAll('li span[aria-hidden="true"]');
+  if (skillsList) {
+    for (const skill of skillsList) {
+      profileData.skills.push(skill.textContent.trim());
+    }
+  }
+
+  completed = true;
+
+  //close skills page
+  if (completed) {
+    window.location.href = profileURL.split('/details/skills')[0];
+    return null;
+  }*/
 
   // Get Projects section
   const projectsElement = document.querySelector('#projects-section'); // TODO: Add selector for projects section
@@ -105,7 +143,11 @@ function displayProfileData(data) {
   Object.keys(data).forEach(key => {
     const element = document.getElementById(key);
     if (element && data[key]) {
-      element.textContent = data[key];
+      if (key === 'education') {
+        element.textContent = data[key].map(edu => `${edu.schoolName} - ${edu.degree}`).join('\n');
+      } else {
+        element.textContent = data[key];
+      }
     }
   });
 
@@ -115,12 +157,20 @@ function displayProfileData(data) {
     educationElement.innerHTML = data.education
       .map(edu => `
         <div class="education-entry">
-          <h3>${edu.schoolName}</h3>
-          <p>${edu.degree}</p>
-          <p>${edu.date}</p>
-          ${edu.activities ? `<p>Activities: ${edu.activities}</p>` : ''}
+          <h3>${edu.schoolName ? `${edu.schoolName} - ` : 'Error: School name not found'}</h3>
+          <p>${edu.degree ? `${edu.degree}` : 'Error: Degree not found'}</p>
+          <p>${edu.date ? `${edu.date}` : 'Error: Date not found'}</p>
+          ${edu.description ? `<p>description: ${edu.description}</p>` : '<p>description: N/A</p>'}
         </div>
       `)
       .join('');
   }
+
+  // Special handling for skills array
+  const skillsElement = document.getElementById('skills');
+  if (skillsElement && data.skills?.length) {
+    skillsElement.innerHTML = data.skills.join(', ');
+  }
+
 }
+

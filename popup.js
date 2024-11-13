@@ -76,13 +76,13 @@ function scrapeLinkedInProfile() {
     const educationTitle = educationItem.querySelector('.display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]');
     const educationDegree = educationItem.querySelector('.t-14.t-normal span[aria-hidden="true"]');
     const educationDate = educationItem.querySelector('.pvs-entity__caption-wrapper[aria-hidden="true"]');
-    const descriptionList = educationItem.querySelectorAll('.duTEzRGpnMXXCujBXGnBBnCkmIYjEVxUPiZzwBdM.pvs-entity__sub-components li span[aria-hidden="true"]');
+    const descriptionList = educationItem.querySelectorAll('.jupmsBwuUWszwbchXgddxkzuKsEiiKjs li span[aria-hidden="true"]');
     let educationDescription = '';
     for (const descriptionItem of descriptionList) {
       educationDescription += descriptionItem.textContent.trim() + '\n';
     }
             
-    if (educationTitle && educationDegree) {
+    if (educationTitle && educationDegree && educationDate) {
       profileData.education.push({
         schoolName: educationTitle.textContent.trim(),
         degree: educationDegree.textContent.trim(),
@@ -90,7 +90,7 @@ function scrapeLinkedInProfile() {
         description: educationDescription
       });
     } else {
-      console.error('Education title or degree not found');
+      console.error('Education title, degree, or date not found');
     }
   }
 

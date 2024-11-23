@@ -48,7 +48,7 @@ function scrapeLinkedInProfile() {
   };
 
   // Updated name selector
-  const nameElement = document.querySelector('h1.RIbnCAsTbWzbdDScQkPGXRrQHSaITKZWQhh');
+  const nameElement = document.querySelector('h1.inline.t-24.v-align-middle.break-words');
   if (nameElement) profileData.name = nameElement.textContent.trim();
 
   // Get headline
@@ -69,6 +69,27 @@ function scrapeLinkedInProfile() {
   // const experienceElement = document.querySelector('#experience-section'); // TODO: Add selector for experience section
   // if (experienceElement) profileData.experience = experienceElement.textContent.trim();
 
+  // Get experience section (DONE)
+  const experienceSectionList = document.querySelector('#experience')?.closest('section')?.querySelectorAll('li.artdeco-list__item div.display-flex.flex-column.full-width');
+  if (experienceSectionList) {
+    for (const experienceItem of experienceSectionList) {
+      const experienceTitle = experienceItem.querySelector('div.display-flex.flex-wrap.align-items-center.full-height span[aria-hidden="true"]');
+      const experienceCompany = experienceItem.querySelector('span.t-14.t-normal span[aria-hidden="true"]');
+      const dateAndLocation = experienceItem.querySelectorAll('span.t-14.t-normal.t-black--light span[aria-hidden="true"]');
+      const experienceDate = dateAndLocation[0];  // First element is the date
+      const experienceLocation = dateAndLocation[1];  // Second element is the location
+      const experienceDescription = experienceItem.querySelector('div[class*="pvs-entity__sub-components"] span[aria-hidden="true"]')?.textContent?.trim();
+      
+      profileData.experience.push({
+        title: experienceTitle?.textContent?.trim() || '',
+        company: experienceCompany?.textContent?.trim() || '',
+        date: experienceDate?.textContent?.trim() || '',
+        location: experienceLocation?.textContent?.trim() || '',
+        description: experienceDescription?.textContent?.trim() || ''
+      });
+    }
+  }
+
   // Get education section (DONE)
   const educationSectionList = document.querySelector('#education')?.closest('section')?.querySelectorAll('li');
 
@@ -76,11 +97,9 @@ function scrapeLinkedInProfile() {
     const educationTitle = educationItem.querySelector('.display-flex.align-items-center.mr1.hoverable-link-text.t-bold span[aria-hidden="true"]');
     const educationDegree = educationItem.querySelector('.t-14.t-normal span[aria-hidden="true"]');
     const educationDate = educationItem.querySelector('.pvs-entity__caption-wrapper[aria-hidden="true"]');
-    const descriptionList = educationItem.querySelectorAll('.jupmsBwuUWszwbchXgddxkzuKsEiiKjs li span[aria-hidden="true"]');
-    let educationDescription = '';
-    for (const descriptionItem of descriptionList) {
-      educationDescription += descriptionItem.textContent.trim() + '\n';
-    }
+    // Updated description selector
+    const descriptionElement = educationItem.querySelector('.display-flex.flex-column.align-self-center.flex-grow-1 div:nth-child(2) span[aria-hidden="true"]');
+    const educationDescription = descriptionElement?.textContent?.trim() || '';
             
     if (educationTitle && educationDegree && educationDate) {
       profileData.education.push({
@@ -163,6 +182,19 @@ function displayProfileData(data) {
           ${edu.description ? `<p>description: ${edu.description}</p>` : '<p>description: N/A</p>'}
         </div>
       `)
+      .join('');
+  }
+
+  // Special handling for experience array
+  const experienceElement = document.getElementById('experience');
+  if (experienceElement && data.experience?.length) {
+    experienceElement.innerHTML = data.experience.map(exp => `
+      <div class="experience-entry">
+        <h3>${exp.title} - ${exp.company}</h3>
+        <p>${exp.date} - ${exp.location}</p>
+        ${exp.description ? `<p>description: ${exp.description}</p>` : '<p>description: N/A</p>'}
+      </div>
+    `)
       .join('');
   }
 

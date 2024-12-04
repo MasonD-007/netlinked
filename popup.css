@@ -8,7 +8,7 @@ body {
 }
 
 /* Button styles */
-.profileButton {
+.scrapeButton, .skillButton, .saveButton {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,7 +24,11 @@ body {
   margin-bottom: 16px;
 }
 
-.profileButton:hover {
+.scrapeButton:hover {
+  background-color: #005885;
+}
+
+.skillButton:hover {
   background-color: #005885;
 }
 

@@ -1,0 +1,23 @@
+## Product Requirements Document
+
+- Generate a personalized LinkedIn connection message using AI
+
+## User Flow
+
+1. User is on a LinkedIn profile page
+2. User clicks on the extension icon
+    - Open popup
+    - Scrape profile data from LinkedIn (scraper.js)
+3. User clicks on the "Generate Message" button
+    - Select which message template to use 
+    - Generate message using AI
+    - Display message in popup and copy it to clipboard
+4. User clicks on the "Send Message" button
+    - Send message to LinkedIn user
+
+## Technical Flow
+
+- Scrape profile data from LinkedIn
+- Generate message using AI
+- Display message in popup and copy it to clipboard
+- Send message to LinkedIn user

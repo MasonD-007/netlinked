@@ -1,8 +1,21 @@
+// Add at the beginning of the file
+let currentProfileData = null;
+
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
   // Match patterns like https://www.linkedin.com/in/username or https://www.linkedin.com/in/username/details/skills/
   return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url) || /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/details\/skills\/?$/.test(url);
 }
+
+document.getElementById('actionButton').addEventListener('click', () => {
+  document.getElementById('buttonContainer').classList.add('hidden');
+  document.getElementById('profileData').classList.remove('hidden');
+});
+
+document.getElementById('skillButton').addEventListener('click', () => {
+  document.getElementById('buttonContainer').classList.add('hidden');
+  document.getElementById('profileData').classList.remove('hidden');
+});
 
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
@@ -60,7 +73,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
 
 // Add this new function to display the data
 function displayProfileData(data) {
-
+  currentProfileData = data;
   // Show the profile data container
   document.getElementById('profileData').classList.remove('hidden');
   
@@ -112,5 +125,71 @@ function displayProfileData(data) {
       </div>
     `;
   }
+
+  // Show save button
+  document.getElementById('saveButton').classList.remove('hidden');
 }
 
+
+
+// Add event listeners for storage operations
+document.addEventListener('DOMContentLoaded', async () => {
+  // Add save button listener
+  document.getElementById('saveButton').addEventListener('click', async () => {
+    if (!currentProfileData) return;
+    
+    const success = await saveProfile(currentProfileData);
+    if (success) {
+      alert('Profile saved successfully!');
+      await displaySavedProfiles();
+    } else {
+      alert('Failed to save profile');
+    }
+  });
+
+  // Display saved profiles on popup open
+  await displaySavedProfiles();
+});
+
+// Function to display saved profiles
+async function displaySavedProfiles() {
+  const profiles = await getProfiles();
+  const container = document.getElementById('savedProfiles');
+  
+  if (profiles.length === 0) {
+    container.innerHTML = '<p>No saved profiles</p>';
+    return;
+  }
+
+  container.innerHTML = profiles.map(profile => `
+    <div class="profile-card" data-profile-id="${profile.savedAt}">
+      <h4>${profile.name}</h4>
+      <p>${profile.headline || ''}</p>
+      <div class="profile-actions">
+        <button class="view-profile-btn">View</button>
+        <button class="delete-profile-btn">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Add event delegation for the buttons
+  container.addEventListener('click', async (e) => {
+    const profileCard = e.target.closest('.profile-card');
+    if (!profileCard) return;
+
+    const profileId = profileCard.dataset.profileId;
+
+    if (e.target.classList.contains('delete-profile-btn')) {
+      if (await deleteProfile(profileId)) {
+        await displaySavedProfiles();
+      } else {
+        alert('Failed to delete profile');
+      }
+    } else if (e.target.classList.contains('view-profile-btn')) {
+      const success = await openProfileUrl(profileId);
+      if (!success) {
+        alert('Could not open profile URL');
+      }
+    }
+  });
+}

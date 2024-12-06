@@ -4,16 +4,15 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <div id="scrapeButton">
-    <button class="scrapeButton" id="actionButton">Scrape Profile</button>
-  </div>
-  <div id="skillButton">
-    <button class="skillButton" id="skillButton">Test Scrape Skills</button>
+  <div id="buttonContainer" class="button-container">
+    <div id="scrapeButton">
+      <button class="scrapeButton" id="actionButton">Scrape Profile</button>
+    </div>
+    <div id="skillButton">
+      <button class="skillButton" id="skillButton">Test Scrape Skills</button>
+    </div>
   </div>
   <div id="profileData" class="profile-data hidden">
-    <!--<div id="saveButton">
-      <button class="saveButton" id="saveButton">Save Profile</button>
-    </div>-->
     <div class="data-field">
       <h3>Name:</h3>
       <p id="name"></p>
@@ -42,7 +41,15 @@
       <h3>Skills:</h3>
       <p id="skills"></p>
     </div>
+    <div class="data-field">
+      <button class="saveButton" id="saveButton">Save Profile</button>
+    </div>
+  </div>
+  <div class="data-field">
+    <h3>Saved Profiles</h3>
+    <div id="savedProfiles" class="saved-profiles"></div>
   </div>
   <script src="main.js"></script>
+  <script src="storage.js"></script>
 </body>
 </html>

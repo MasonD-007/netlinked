@@ -21,7 +21,7 @@ function loadSkillPage() {
             chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
                 if (tabId === tabs[0].id && changeInfo.status === "complete") {
                     console.log("Skills URL loaded");
-                    chrome.tabs.executeScript(tabId, { code: scrapeSkills });
+                    scrapeSkills();
                 }
             });
         }

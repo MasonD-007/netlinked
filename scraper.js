@@ -118,4 +118,5 @@ function scrapeLinkedInProfileSkills() {
     
     return tempSkills;
 }
+// Add at the end of the file
 window.scrapeLinkedInProfile = scrapeLinkedInProfile;

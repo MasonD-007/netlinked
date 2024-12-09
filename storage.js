@@ -44,7 +44,7 @@ async function openProfileUrl(savedAt) {
     const key = `profile_${new Date(savedAt).getTime()}`;
     const result = await chrome.storage.local.get(key);
     const profile = result[key];
-    console.log(profile);
+    console.log(profile); // Could this be used to create a website that shows all the profiles?
     console.log(profile?.profileURL);
     
     if (profile?.profileURL) {

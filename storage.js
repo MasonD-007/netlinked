@@ -45,6 +45,7 @@ async function openProfileUrl(savedAt) {
     const result = await chrome.storage.local.get(key);
     const profile = result[key];
     console.log(profile);
+    console.log(profile?.profileURL);
     
     if (profile?.profileURL) {
       chrome.tabs.create({ url: profile.profileURL });

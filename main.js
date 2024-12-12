@@ -107,6 +107,17 @@ function displayProfileData(data) {
     `;
   }
 
+  // Special handling for projects array
+  const projectsElement = document.getElementById('projects');
+  if (projectsElement && data.projects?.length) {
+    projectsElement.innerHTML = data.projects.map(project => `
+      <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+        <h3 class="font-bold text-lg">${project.title}</h3>
+        <p class="text-gray-600">${project.description}</p>
+      </div>
+    `).join('');
+  }
+
   // Show save button
   document.getElementById('saveButton').classList.remove('hidden');
 }

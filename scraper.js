@@ -10,7 +10,7 @@ class ProfileData {
         this.experience = []; //DONE
         this.education = []; //DONE
         this.skills = []; //DONE
-        //this.projects = []; //TODO
+        this.projects = []; //
         //this.licenses = []; //TODO
     }
 
@@ -25,7 +25,7 @@ class ProfileData {
         this.about = document.querySelector('#about')?.closest('section')?.querySelector('.display-flex.ph5.pv3 .full-width[dir="ltr"] span[aria-hidden="true"]')?.textContent?.trim();
         this.experience = this.getExperienceSection();
         this.education = this.getEducationSection();
-        //this.skills = this.getSkillsSection();
+        this.projects = this.getProjectsSection();
     }
 
     getExperienceSection() { //Have to work on getting the description
@@ -77,17 +77,21 @@ class ProfileData {
         return education;
     }
 
-    /*async getSkillsSection() {
-        //check if we are on the skills page
-        if (window.location.href.includes('/details/skills/')) {
-            return scrapeLinkedInProfileSkills();
-        }
-        return [];
-    }*/
-
     getProjectsSection() { //TODO
+        const projectsSectionList = document.querySelector('#projects')?.closest('section')?.querySelectorAll('li.artdeco-list__item');
+        const projects = [];
+        if (projectsSectionList) {
+            for (const projectItem of projectsSectionList) {
+                const projectTitle = projectItem.querySelector('.display-flex.flex-wrap.align-items-center.full-height span[aria-hidden="true"]');
+                const projectDescription = projectItem.querySelector('li.pvs-list__item--with-top-padding div.display-flex.full-width span[aria-hidden="true"]');
+                projects.push({
+                    title: projectTitle?.textContent?.trim() || '',
+                    description: projectDescription?.textContent?.trim() || ''
+                });
+            }
+        }
+        return projects;
     }
-
     getLicensesSection() { //TODO
     }
 }

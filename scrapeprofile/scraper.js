@@ -9,9 +9,8 @@ class ProfileData {
         this.about = ''; //DONE
         this.experience = []; //DONE
         this.education = []; //DONE
-        this.skills = []; //CLOSE TO BEING DONE
-        //this.projects = []; //TODO
-        //this.licenses = []; //TODO
+        this.skills = []; //DONE
+        this.projects = []; //DONE
     }
 
     getProfileData() {
@@ -25,11 +24,11 @@ class ProfileData {
         this.about = document.querySelector('#about')?.closest('section')?.querySelector('.display-flex.ph5.pv3 .full-width[dir="ltr"] span[aria-hidden="true"]')?.textContent?.trim();
         this.experience = this.getExperienceSection();
         this.education = this.getEducationSection();
-        //this.skills = this.getSkillsSection();
+        this.projects = this.getProjectsSection();
     }
 
-    getExperienceSection() { //Have to work on getting the description
-        const experienceSectionList = document.querySelector('#experience')?.closest('section')?.querySelectorAll('li.artdeco-list__item div.display-flex.flex-column.full-width');
+    getExperienceSection() { //DONE
+        const experienceSectionList = document.querySelector('#experience')?.closest('section')?.querySelectorAll('li.artdeco-list__item'); //div.display-flex.flex-column.full-width
         const experience = [];
         if (experienceSectionList) {
             for (const experienceItem of experienceSectionList) {
@@ -38,7 +37,7 @@ class ProfileData {
                 const dateAndLocation = experienceItem.querySelectorAll('span.t-14.t-normal.t-black--light span[aria-hidden="true"]');
                 const experienceDate = dateAndLocation[0];  // First element is the date
                 const experienceLocation = dateAndLocation[1];  // Second element is the location
-                const experienceDescription = experienceItem.querySelector('div[class*="pvs-entity__sub-components"] span[aria-hidden="true"]')?.textContent?.trim();
+                const experienceDescription = experienceItem.querySelector('li.pvs-list__item--with-top-padding div.display-flex.full-width span[aria-hidden="true"]');
                 
                 experience.push({
                     title: experienceTitle?.textContent?.trim() || '',
@@ -77,18 +76,20 @@ class ProfileData {
         return education;
     }
 
-    /*async getSkillsSection() {
-        //check if we are on the skills page
-        if (window.location.href.includes('/details/skills/')) {
-            return scrapeLinkedInProfileSkills();
+    getProjectsSection() { //DONE
+        const projectsSectionList = document.querySelector('#projects')?.closest('section')?.querySelectorAll('li.artdeco-list__item');
+        const projects = [];
+        if (projectsSectionList) {
+            for (const projectItem of projectsSectionList) {
+                const projectTitle = projectItem.querySelector('.display-flex.flex-wrap.align-items-center.full-height span[aria-hidden="true"]');
+                const projectDescription = projectItem.querySelector('li.pvs-list__item--with-top-padding div.display-flex.full-width span[aria-hidden="true"]');
+                projects.push({
+                    title: projectTitle?.textContent?.trim() || '',
+                    description: projectDescription?.textContent?.trim() || ''
+                });
+            }
         }
-        return [];
-    }*/
-
-    getProjectsSection() { //TODO
-    }
-
-    getLicensesSection() { //TODO
+        return projects;
     }
 }
 

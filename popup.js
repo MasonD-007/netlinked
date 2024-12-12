@@ -4,7 +4,7 @@ let currentProfileData = null;
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
   // Match patterns like https://www.linkedin.com/in/username or https://www.linkedin.com/in/username/details/skills/
-  return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url) || /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/details\/skills\/?$/.test(url);
+  return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url);
 }
 
 document.getElementById('actionButton').addEventListener('click', () => {
@@ -22,7 +22,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       
       //Call the background script to scrape the profile
       chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
-        console.log("Profile scrape response: {", response, "}");
         if (response.success) {
           displayProfileData(response.profileData);
           document.getElementById('loadingPopup').classList.add('hidden');
@@ -41,22 +40,12 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   }
 });
 
-document.getElementById('TestButton').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: "testbackground" }, (response) => {
-    console.log("Background function test response: {", response, "}");
-  });
-});
 
 // Add this new function to display the data
 function displayProfileData(data) {
   currentProfileData = data;
   // Show the profile data container
   document.getElementById('profileData').classList.remove('hidden');
-  // Check if data is null
-  if (data === null) {
-    console.log("Data is null");
-    return;
-  }
 
   // Update basic fields with scraped data
   Object.keys(data).forEach(key => {
@@ -99,13 +88,28 @@ function displayProfileData(data) {
     skillsElement.innerHTML = `
       <div class="flex flex-wrap gap-2">
         ${data.skills.map(skill => `
-          <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            ${skill.skill}
-            ${skill.endorsement ? `(${skill.endorsement})` : ''}
-          </span>
+          <p class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+            - ${skill.skill} 
+          </p>
+          ${skill.endorsement ? `
+            <p class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              by: (${skill.endorsement})
+            </p>
+          ` : ''}
         `).join('')}
       </div>
     `;
+  }
+
+  // Special handling for projects array
+  const projectsElement = document.getElementById('projects');
+  if (projectsElement && data.projects?.length) {
+    projectsElement.innerHTML = data.projects.map(project => `
+      <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+        <h3 class="font-bold text-lg">${project.title}</h3>
+        <p class="text-gray-600">${project.description}</p>
+      </div>
+    `).join('');
   }
 
   // Show save button

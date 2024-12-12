@@ -12,52 +12,23 @@ document.getElementById('actionButton').addEventListener('click', () => {
   document.getElementById('profileData').classList.remove('hidden');
 });
 
-document.getElementById('skillButton').addEventListener('click', () => {
-  document.getElementById('buttonContainer').classList.add('hidden');
-  document.getElementById('profileData').classList.remove('hidden');
-});
-
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
     // User is on a LinkedIn profile
     document.getElementById('actionButton').onclick = () => {
-      // Execute script to scrape LinkedIn data
-      chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        files: ['scraper.js']
-      }, () => {
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          function: () => {
-            return window.scrapeLinkedInProfile();
-          }
-        }, (results) => {
-          if (results && results[0]) {
-            const profileData = results[0].result;
-            console.log(profileData);
-            displayProfileData(profileData);
-          }
-        });
-      });
-    };
-    document.getElementById('skillButton').onclick = () => {
-      // Execute script to scrape LinkedIn data
-      chrome.scripting.executeScript({
-        target: { tabId: tabs[0].id },
-        files: ['scraper.js']
-      }, () => {
-        chrome.scripting.executeScript({
-          target: { tabId: tabs[0].id },
-          function: () => {
-            return window.scrapeLinkedInProfileSkills();
-          }
-        }, (results) => {
-          if (results && results[0]) {
-            const skills = results[0].result;
-            console.log(skills);
-          }
-        });
+      // Show loading popup
+      document.getElementById('loadingPopup').classList.remove('hidden');
+      
+      //Call the background script to scrape the profile
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+        console.log("Profile scrape response: {", response, "}");
+        if (response.success) {
+          displayProfileData(response.profileData);
+          document.getElementById('loadingPopup').classList.add('hidden');
+        } else {
+          alert("Failed to scrape profile data");
+        }
       });
     };
   } else {
@@ -68,6 +39,12 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       }
     };
   }
+});
+
+document.getElementById('TestButton').addEventListener('click', () => {
+  chrome.runtime.sendMessage({ action: "testbackground" }, (response) => {
+    console.log("Background function test response: {", response, "}");
+  });
 });
 
 // Add this new function to display the data

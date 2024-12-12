@@ -8,8 +8,14 @@
     <div id="scrapeButton">
       <button class="scrapeButton" id="actionButton">Scrape Profile</button>
     </div>
-    <div id="skillButton">
-      <button class="skillButton" id="skillButton">Test Scrape Skills</button>
+    <div id="TestButton">
+      <button class="TestButton" id="TestButton">Test background functions</button>
+    </div>
+  </div>
+  <div id="loadingPopup" class="loading-popup hidden">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p>Gathering profile information...</p>
     </div>
   </div>
   <div id="profileData" class="profile-data hidden">
@@ -49,7 +55,8 @@
     <h3>Saved Profiles</h3>
     <div id="savedProfiles" class="saved-profiles"></div>
   </div>
-  <script src="main.js"></script>
-  <script src="storage.js"></script>
+  <script src="../storage.js"></script>
+  <script src="../main.js"></script>
 </body>
 </html>
+

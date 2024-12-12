@@ -41,11 +41,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   }
 });
 
-document.getElementById('TestButton').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: "testbackground" }, (response) => {
-    console.log("Background function test response: {", response, "}");
-  });
-});
 
 // Add this new function to display the data
 function displayProfileData(data) {
@@ -99,10 +94,14 @@ function displayProfileData(data) {
     skillsElement.innerHTML = `
       <div class="flex flex-wrap gap-2">
         ${data.skills.map(skill => `
-          <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            ${skill.skill}
-            ${skill.endorsement ? `(${skill.endorsement})` : ''}
-          </span>
+          <p class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+            - ${skill.skill} 
+          </p>
+          ${skill.endorsement ? `
+            <p class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              by: (${skill.endorsement})
+            </p>
+          ` : ''}
         `).join('')}
       </div>
     `;

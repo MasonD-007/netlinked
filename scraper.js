@@ -9,7 +9,7 @@ class ProfileData {
         this.about = ''; //DONE
         this.experience = []; //DONE
         this.education = []; //DONE
-        this.skills = []; //CLOSE TO BEING DONE
+        this.skills = []; //DONE
         //this.projects = []; //TODO
         //this.licenses = []; //TODO
     }

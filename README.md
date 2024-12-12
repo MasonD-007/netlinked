@@ -11,6 +11,17 @@ Future features:
     - Automatically send messages to your network to 
         increase the visibility of your own profile
 
+## What is this?
+This is a tool that helps you connect with people on LinkedIn. It uses the Gemini API to generate a draft of an introduction message for a LinkedIn connection request.
+
+## How does it work?
+1. The tool extracts important information from the LinkedIn profile
+2. The tool uses the Gemini API to generate a draft of an introduction message for a LinkedIn connection request
+3. The tool sends the draft to the user
+    
 ## Setup
 1. Copy `config.example.js` to `config.js`
 2. Add your Gemini API key to `config.js`
+
+
+

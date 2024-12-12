@@ -31,7 +31,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       });
     };
     document.getElementById('generateMessageButton').onclick = () => {
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage" }, (response) => {
+      //First make sure we have the clients data
+      //second scrape the current profile data
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", ClientData: { name: "Mason D" } }, (response) => {
         if (response.success) {
           document.getElementById('buttonContainer').classList.add('hidden');
           document.getElementById('messageContainer').classList.remove('hidden');

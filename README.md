@@ -10,3 +10,7 @@ Future features:
     - Automatically apply to jobs on LinkedIn Jobs
     - Automatically send messages to your network to 
         increase the visibility of your own profile
+
+## Setup
+1. Copy `config.example.js` to `config.js`
+2. Add your Gemini API key to `config.js`

@@ -10,7 +10,7 @@ class ProfileData {
         this.experience = []; //DONE
         this.education = []; //DONE
         this.skills = []; //DONE
-        this.projects = []; //
+        this.projects = []; //DONE
         //this.licenses = []; //TODO
     }
 
@@ -29,7 +29,7 @@ class ProfileData {
     }
 
     getExperienceSection() { //Have to work on getting the description
-        const experienceSectionList = document.querySelector('#experience')?.closest('section')?.querySelectorAll('li.artdeco-list__item div.display-flex.flex-column.full-width');
+        const experienceSectionList = document.querySelector('#experience')?.closest('section')?.querySelectorAll('li.artdeco-list__item'); //div.display-flex.flex-column.full-width
         const experience = [];
         if (experienceSectionList) {
             for (const experienceItem of experienceSectionList) {
@@ -38,7 +38,7 @@ class ProfileData {
                 const dateAndLocation = experienceItem.querySelectorAll('span.t-14.t-normal.t-black--light span[aria-hidden="true"]');
                 const experienceDate = dateAndLocation[0];  // First element is the date
                 const experienceLocation = dateAndLocation[1];  // Second element is the location
-                const experienceDescription = experienceItem.querySelector('div[class*="pvs-entity__sub-components"] span[aria-hidden="true"]')?.textContent?.trim();
+                const experienceDescription = experienceItem.querySelector('li.pvs-list__item--with-top-padding div.display-flex.full-width span[aria-hidden="true"]');
                 
                 experience.push({
                     title: experienceTitle?.textContent?.trim() || '',
@@ -77,7 +77,7 @@ class ProfileData {
         return education;
     }
 
-    getProjectsSection() { //TODO
+    getProjectsSection() { //DONE
         const projectsSectionList = document.querySelector('#projects')?.closest('section')?.querySelectorAll('li.artdeco-list__item');
         const projects = [];
         if (projectsSectionList) {
@@ -92,6 +92,7 @@ class ProfileData {
         }
         return projects;
     }
+    //do i really need this?
     getLicensesSection() { //TODO
     }
 }

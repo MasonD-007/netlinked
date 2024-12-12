@@ -54,9 +54,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
           }
         }, (results) => {
           if (results && results[0]) {
-            const profileData = results[0].result;
-            console.log(profileData);
-            displayProfileData(profileData);
+            const skills = results[0].result;
+            console.log(skills);
           }
         });
       });
@@ -76,7 +75,12 @@ function displayProfileData(data) {
   currentProfileData = data;
   // Show the profile data container
   document.getElementById('profileData').classList.remove('hidden');
-  
+  // Check if data is null
+  if (data === null) {
+    console.log("Data is null");
+    return;
+  }
+
   // Update basic fields with scraped data
   Object.keys(data).forEach(key => {
     const element = document.getElementById(key);
@@ -119,7 +123,8 @@ function displayProfileData(data) {
       <div class="flex flex-wrap gap-2">
         ${data.skills.map(skill => `
           <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            ${skill}
+            ${skill.skill}
+            ${skill.endorsement ? `(${skill.endorsement})` : ''}
           </span>
         `).join('')}
       </div>

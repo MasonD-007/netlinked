@@ -9,7 +9,7 @@ class ProfileData {
         this.about = ''; //DONE
         this.experience = []; //DONE
         this.education = []; //DONE
-        this.skills = []; //TODO
+        this.skills = []; //CLOSE TO BEING DONE
         //this.projects = []; //TODO
         //this.licenses = []; //TODO
     }
@@ -78,8 +78,30 @@ class ProfileData {
     }
 
     async getSkillsSection() {
-        const tempSkills = await chrome.runtime.sendMessage({ action: "scrapeSkills" });
-        return tempSkills;
+        try {
+            console.log("Initiating skills scraping...");
+            return new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage({ action: "scrapeSkills" }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.error("Runtime error:", chrome.runtime.lastError);
+                        reject(chrome.runtime.lastError);
+                        return;
+                    }
+                    
+                    if (response.error) {
+                        console.error("Error in skills scraping:", response.error);
+                        resolve([]); // Return empty array on error
+                        return;
+                    }
+                    
+                    console.log("Skills received from background:", response);
+                    resolve(response || []); // Return the response or an empty array if no response
+                });
+            });
+        } catch (error) {
+            console.error("Error fetching skills:", error);
+            return [];
+        }
     }   
 
     getProjectsSection() { //TODO
@@ -89,34 +111,33 @@ class ProfileData {
     }
 }
 
-function scrapeLinkedInProfile() {
-
+async function scrapeLinkedInProfile() {
     const profileData = new ProfileData();
-    profileData.scrapeProfileData();
+    await profileData.scrapeProfileData();
+    console.log("Final profile data:", profileData.getProfileData());
     return profileData;
 }
 
+console.log("MADE IT HERE")
+
+//kNjbgtHGoigvFdSJZzHctXWzBpsLcAMtktzzr pvs-entity__sub-components
+
 function scrapeLinkedInProfileSkills() {
-    console.log("Scraping skills");
     const tempSkills = [];
 
-    // Base selector pattern
-    const baseId = 'profilePagedListComponent-ACoAAEGrD3wBD7kH-uubIz0CLLfFRaWTbI5fYw4-SKILLS-VIEW-DETAILS-profileTabSection-ALL-SKILLS-NONE-en-US-';
-    
-    // Try multiple indices
-    for (let i = 0; i < 10; i++) {
-        const selector = `#${baseId}${i}`;
-        const skillElement = document.querySelector(selector);
-        
-        if (skillElement) {
-            const skillText = skillElement.querySelector('span[aria-hidden="true"]')?.textContent?.trim();
-            if (skillText) {
-                tempSkills.push(skillText);
-            }
+    const skillElements = document.querySelectorAll('[id^="profilePagedListComponent-"][id*="-SKILLS-VIEW-DETAILS-profileTabSection-ALL-SKILLS-NONE-en-US-"]');
+    skillElements.forEach((skillElement) => {
+        const skillText = skillElement.querySelector('span[aria-hidden="true"]')?.textContent?.trim();
+        const skillEndorsement = skillElement.querySelector('div.pvs-entity__sub-components span[aria-hidden="true"]')?.textContent?.trim();
+        if (skillText) {
+            tempSkills.push({
+                skill: skillText,
+                endorsement: skillEndorsement
+            });
         }
-    }
-    
+    });
     return tempSkills;
 }
 // Add at the end of the file
 window.scrapeLinkedInProfile = scrapeLinkedInProfile;
+window.scrapeLinkedInProfileSkills = scrapeLinkedInProfileSkills;

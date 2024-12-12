@@ -57,3 +57,16 @@ async function openProfileUrl(savedAt) {
     return false;
   }
 } 
+
+async function printProfile(savedAt) {
+  try {
+    const key = `profile_${new Date(savedAt).getTime()}`;
+    const result = await chrome.storage.local.get(key);
+    const profile = result[key];
+    console.log(profile);
+    return true;
+  } catch (error) {
+    console.error('Error printing profile:', error);
+    return false;
+  }
+}

@@ -25,7 +25,7 @@ class ProfileData {
         this.about = document.querySelector('#about')?.closest('section')?.querySelector('.display-flex.ph5.pv3 .full-width[dir="ltr"] span[aria-hidden="true"]')?.textContent?.trim();
         this.experience = this.getExperienceSection();
         this.education = this.getEducationSection();
-        this.skills = await this.getSkillsSection();
+        //this.skills = this.getSkillsSection();
     }
 
     getExperienceSection() { //Have to work on getting the description
@@ -77,32 +77,13 @@ class ProfileData {
         return education;
     }
 
-    async getSkillsSection() {
-        try {
-            console.log("Initiating skills scraping...");
-            return new Promise((resolve, reject) => {
-                chrome.runtime.sendMessage({ action: "scrapeSkills" }, (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.error("Runtime error:", chrome.runtime.lastError);
-                        reject(chrome.runtime.lastError);
-                        return;
-                    }
-                    
-                    if (response.error) {
-                        console.error("Error in skills scraping:", response.error);
-                        resolve([]); // Return empty array on error
-                        return;
-                    }
-                    
-                    console.log("Skills received from background:", response);
-                    resolve(response || []); // Return the response or an empty array if no response
-                });
-            });
-        } catch (error) {
-            console.error("Error fetching skills:", error);
-            return [];
+    /*async getSkillsSection() {
+        //check if we are on the skills page
+        if (window.location.href.includes('/details/skills/')) {
+            return scrapeLinkedInProfileSkills();
         }
-    }   
+        return [];
+    }*/
 
     getProjectsSection() { //TODO
     }
@@ -115,29 +96,5 @@ async function scrapeLinkedInProfile() {
     const profileData = new ProfileData();
     await profileData.scrapeProfileData();
     console.log("Final profile data:", profileData.getProfileData());
-    return profileData;
+    return profileData.getProfileData();
 }
-
-console.log("MADE IT HERE")
-
-//kNjbgtHGoigvFdSJZzHctXWzBpsLcAMtktzzr pvs-entity__sub-components
-
-function scrapeLinkedInProfileSkills() {
-    const tempSkills = [];
-
-    const skillElements = document.querySelectorAll('[id^="profilePagedListComponent-"][id*="-SKILLS-VIEW-DETAILS-profileTabSection-ALL-SKILLS-NONE-en-US-"]');
-    skillElements.forEach((skillElement) => {
-        const skillText = skillElement.querySelector('span[aria-hidden="true"]')?.textContent?.trim();
-        const skillEndorsement = skillElement.querySelector('div.pvs-entity__sub-components span[aria-hidden="true"]')?.textContent?.trim();
-        if (skillText) {
-            tempSkills.push({
-                skill: skillText,
-                endorsement: skillEndorsement
-            });
-        }
-    });
-    return tempSkills;
-}
-// Add at the end of the file
-window.scrapeLinkedInProfile = scrapeLinkedInProfile;
-window.scrapeLinkedInProfileSkills = scrapeLinkedInProfileSkills;

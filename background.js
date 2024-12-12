@@ -1,41 +1,65 @@
 console.log("Background script loaded");
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Message received:", message);
-    if (message.action === "scrapeSkills") {
-        loadSkillPage(sender.tab.id)
-            .then(originalUrl => {
-                if (!originalUrl) {
-                    throw new Error("Failed to load skills page");
+    console.log("Message received:", message)
+    if (message.action === "scrapeProfile") {
+        console.log("Scraping profile");
+        
+        // Check if sender.tab exists before accessing tab.id
+        if (!message.tabId) {
+            console.error("Tab ID not found. Message must be sent from a content script.");
+            return;
+        }
+        
+        // Execute the scraping script in the context of the active tab
+        chrome.scripting.executeScript({
+            target: { tabId: message.tabId },
+            files: ['scraper.js']
+        }, () => {
+            // After loading the script, execute the scraping function
+            chrome.scripting.executeScript({
+                target: { tabId: message.tabId },
+                func: async () => {
+                    // Add a small delay to ensure the page is fully loaded
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    const result = await scrapeLinkedInProfile();
+                    return result;
                 }
+            }, (results) => {
+                const profileData = results[0].result;
+                console.log("Profile data scraped:", profileData);
                 
-                return new Promise((resolve) => {
-                    chrome.scripting.executeScript({
-                        target: { tabId: sender.tab.id },
-                        func: scrapeSkills
-                    }, (results) => {
-                        const skills = results[0].result;
-                        chrome.tabs.update(sender.tab.id, { url: originalUrl }, () => {
-                            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
-                                if (tabId === sender.tab.id && changeInfo.status === 'complete') {
-                                    chrome.tabs.onUpdated.removeListener(listener);
-                                    resolve(skills);
-                                }
-                            });
+                // Create an async function to handle the sequential flow
+                async function handleSkillsScraping() {
+                    try {
+                        const originalUrl = await loadSkillPage(message.tabId);
+                        // Execute scrapeSkills in the context of the web page
+                        const results = await chrome.scripting.executeScript({
+                            target: { tabId: message.tabId },
+                            func: scrapeSkills
                         });
-                    });
-                });
-            })
-            .then(skills => {
-                console.log("Sending skills back to content script:", skills);
-                sendResponse(skills);
-            })
-            .catch(error => {
-                console.error("Error in skills scraping process:", error);
-                sendResponse({ error: error.message });
+                        const skills = results[0].result;
+                        console.log("Skills scraped:", skills);
+                        profileData.skills = skills;
+                        console.log("Profile data after skills:", profileData);
+                        chrome.tabs.update(message.tabId, { url: originalUrl });
+                        sendResponse({ profileData: profileData, success: true });
+                    } catch (error) {
+                        console.error("Error during skills scraping:", error);
+                        sendResponse({ profileData: profileData, success: false });
+                    }
+                }
+
+                handleSkillsScraping();
+                return true; // Keep the message channel open
             });
-            
-        return true;
+        });
+        
+        return true; // Keep the message channel open for async response
+    }
+    if (message.action === "testbackground") {
+        console.log("Testing background functions");
+        sendResponse({ message: "Background functions tested" });
     }
 });
 
@@ -48,16 +72,16 @@ function loadSkillPage(tabId) {
                 return;
             }
 
-            const currentUrl = tab.url;
+            const originalUrl = tab.url;
             
-            if (currentUrl.includes("/details/skills/")) {
+            if (originalUrl.includes("/details/skills/")) {
                 console.log("Skills URL found");
                 setTimeout(() => {
-                    resolve(currentUrl);
+                    resolve(originalUrl);
                 }, 1500);
             } else {
                 console.log("Opening skills URL");
-                const skillsUrl = currentUrl + "/details/skills/";
+                const skillsUrl = originalUrl + "/details/skills/";
                 
                 chrome.tabs.update(tabId, { url: skillsUrl }, () => {
                     if (chrome.runtime.lastError) {
@@ -70,7 +94,7 @@ function loadSkillPage(tabId) {
                             chrome.tabs.onUpdated.removeListener(listener);
                             console.log("Skills URL loaded");
                             setTimeout(() => {
-                                resolve(currentUrl);
+                                resolve(originalUrl);
                             }, 1500);
                         }
                     });
@@ -80,9 +104,11 @@ function loadSkillPage(tabId) {
     });
 }
 
-function scrapeSkills() {
+
+async function scrapeSkills() {
     const tempSkills = [];
 
+    // Remove the document null check since it will always be defined in the page context
     const skillElements = document.querySelectorAll('[id^="profilePagedListComponent-"][id*="-SKILLS-VIEW-DETAILS-profileTabSection-ALL-SKILLS-NONE-en-US-"]');
     skillElements.forEach((skillElement) => {
         const skillText = skillElement.querySelector('span[aria-hidden="true"]')?.textContent?.trim();

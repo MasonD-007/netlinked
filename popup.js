@@ -4,7 +4,7 @@ let currentProfileData = null;
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
   // Match patterns like https://www.linkedin.com/in/username or https://www.linkedin.com/in/username/details/skills/
-  return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url) || /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/details\/skills\/?$/.test(url);
+  return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url);
 }
 
 document.getElementById('actionButton').addEventListener('click', () => {
@@ -22,7 +22,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       
       //Call the background script to scrape the profile
       chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
-        console.log("Profile scrape response: {", response, "}");
         if (response.success) {
           displayProfileData(response.profileData);
           document.getElementById('loadingPopup').classList.add('hidden');
@@ -47,11 +46,6 @@ function displayProfileData(data) {
   currentProfileData = data;
   // Show the profile data container
   document.getElementById('profileData').classList.remove('hidden');
-  // Check if data is null
-  if (data === null) {
-    console.log("Data is null");
-    return;
-  }
 
   // Update basic fields with scraped data
   Object.keys(data).forEach(key => {

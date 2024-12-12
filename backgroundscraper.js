@@ -14,7 +14,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Execute the scraping script in the context of the active tab
         chrome.scripting.executeScript({
             target: { tabId: message.tabId },
-            files: ['scraper.js']
+            files: ['scrapeprofile/scraper.js']
         }, () => {
             // After loading the script, execute the scraping function
             chrome.scripting.executeScript({
@@ -27,8 +27,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
             }, (results) => {
                 const profileData = results[0].result;
-                console.log("Profile data scraped:", profileData);
-                
                 // Create an async function to handle the sequential flow
                 async function handleSkillsScraping() {
                     try {
@@ -39,9 +37,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             func: scrapeSkills
                         });
                         const skills = results[0].result;
-                        console.log("Skills scraped:", skills);
                         profileData.skills = skills;
-                        console.log("Profile data after skills:", profileData);
                         chrome.tabs.update(message.tabId, { url: originalUrl });
                         sendResponse({ profileData: profileData, success: true });
                     } catch (error) {
@@ -57,10 +53,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         return true; // Keep the message channel open for async response
     }
-    if (message.action === "testbackground") {
-        console.log("Testing background functions");
-        sendResponse({ message: "Background functions tested" });
-    }
 });
 
 function loadSkillPage(tabId) {
@@ -75,12 +67,10 @@ function loadSkillPage(tabId) {
             const originalUrl = tab.url;
             
             if (originalUrl.includes("/details/skills/")) {
-                console.log("Skills URL found");
                 setTimeout(() => {
                     resolve(originalUrl);
                 }, 1500);
             } else {
-                console.log("Opening skills URL");
                 const skillsUrl = originalUrl + "/details/skills/";
                 
                 chrome.tabs.update(tabId, { url: skillsUrl }, () => {

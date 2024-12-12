@@ -11,7 +11,6 @@ class ProfileData {
         this.education = []; //DONE
         this.skills = []; //DONE
         this.projects = []; //DONE
-        //this.licenses = []; //TODO
     }
 
     getProfileData() {
@@ -28,7 +27,7 @@ class ProfileData {
         this.projects = this.getProjectsSection();
     }
 
-    getExperienceSection() { //Have to work on getting the description
+    getExperienceSection() { //DONE
         const experienceSectionList = document.querySelector('#experience')?.closest('section')?.querySelectorAll('li.artdeco-list__item'); //div.display-flex.flex-column.full-width
         const experience = [];
         if (experienceSectionList) {
@@ -91,9 +90,6 @@ class ProfileData {
             }
         }
         return projects;
-    }
-    //do i really need this?
-    getLicensesSection() { //TODO
     }
 }
 

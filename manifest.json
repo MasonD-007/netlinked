@@ -8,12 +8,12 @@
 		"default_title": "NetLinked",
 		"default_icon": "netlinked.png"
 	},
-	"permissions": ["activeTab", "scripting", "storage"],
+	"permissions": ["activeTab", "scripting", "storage", "webRequest"],
 	"host_permissions": ["https://*.linkedin.com/*"],
 	"content_security_policy": {
 		"extension_pages": "script-src 'self'; object-src 'self'"
 	},
 	"background": {
-		"service_worker": "backgroundscraper.js"
+		"service_worker": "background.js"
 	}
 }

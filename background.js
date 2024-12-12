@@ -53,8 +53,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         
         return true; // Keep the message channel open for async response
     }
+    else if (message.action === "generateMessage") {
+        console.log("Generating message");
+        const message = genMessage(message.ClientData, message.profileData);
+        sendResponse({ message: message, success: true });
+        return true; // Keep the message channel open for async response
+    }
 });
 
+//Scrape skills
 function loadSkillPage(tabId) {
     return new Promise((resolve, reject) => {
         chrome.tabs.get(tabId, (tab) => {
@@ -94,7 +101,6 @@ function loadSkillPage(tabId) {
     });
 }
 
-
 async function scrapeSkills() {
     const tempSkills = [];
 
@@ -112,3 +118,16 @@ async function scrapeSkills() {
     });
     return tempSkills;
 }
+//End of scrape skills
+
+//Generate message
+async function genMessage(ClientData, profileData) {
+    const message = await callGemini(ClientData, profileData);
+    return message;
+}
+
+async function callGemini(ClientData, profileData) {
+
+}
+
+//End of generate message

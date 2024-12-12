@@ -30,6 +30,17 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         }
       });
     };
+    document.getElementById('generateMessageButton').onclick = () => {
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage" }, (response) => {
+        if (response.success) {
+          document.getElementById('buttonContainer').classList.add('hidden');
+          document.getElementById('messageContainer').classList.remove('hidden');
+          document.getElementById('message').textContent = response.message;
+        } else {
+          alert("Failed to generate message");
+        }
+      });
+    };
   } else {
     // User is not on a LinkedIn profile
     document.getElementById('actionButton').onclick = () => {
@@ -115,8 +126,6 @@ function displayProfileData(data) {
   // Show save button
   document.getElementById('saveButton').classList.remove('hidden');
 }
-
-
 
 // Add event listeners for storage operations
 document.addEventListener('DOMContentLoaded', async () => {

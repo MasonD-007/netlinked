@@ -75,7 +75,7 @@ function displayProfileData(data) {
   currentProfileData = data;
   // Show the profile data container
   document.getElementById('profileData').classList.remove('hidden');
-  
+  // Check if data is null
   if (data === null) {
     console.log("Data is null");
     return;

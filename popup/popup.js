@@ -30,6 +30,19 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         }
       });
     };
+    document.getElementById('generateMessageButton').onclick = () => {
+      //First make sure we have the clients data
+      //second scrape the current profile data
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", ClientData: { name: "Mason D" } }, (response) => {
+        if (response.success) {
+          document.getElementById('buttonContainer').classList.add('hidden');
+          document.getElementById('messageContainer').classList.remove('hidden');
+          document.getElementById('message').textContent = response.message;
+        } else {
+          alert("Failed to generate message");
+        }
+      });
+    };
   } else {
     // User is not on a LinkedIn profile
     document.getElementById('actionButton').onclick = () => {
@@ -116,8 +129,6 @@ function displayProfileData(data) {
   document.getElementById('saveButton').classList.remove('hidden');
 }
 
-
-
 // Add event listeners for storage operations
 document.addEventListener('DOMContentLoaded', async () => {
   // Add save button listener
@@ -128,6 +139,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (success) {
       alert('Profile saved successfully!');
       await displaySavedProfiles();
+      document.getElementById('saveButton').classList.add('hidden');
+      document.getElementById('profileData').classList.add('hidden');
+      document.getElementById('buttonContainer').classList.remove('hidden');
     } else {
       alert('Failed to save profile');
     }
@@ -153,6 +167,7 @@ async function displaySavedProfiles() {
       <p>${profile.headline || ''}</p>
       <div class="profile-actions">
         <button class="view-profile-btn">View</button>
+        <button class="print-profile-btn">Print</button>
         <button class="delete-profile-btn">Delete</button>
       </div>
     </div>
@@ -175,6 +190,11 @@ async function displaySavedProfiles() {
       const success = await openProfileUrl(profileId);
       if (!success) {
         alert('Could not open profile URL');
+      }
+    } else if (e.target.classList.contains('print-profile-btn')) {
+      const success = await printProfile(profileId);
+      if (!success) {
+        alert('Failed to print profile');
       }
     }
   });

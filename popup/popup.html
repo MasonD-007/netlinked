@@ -7,12 +7,19 @@
   <div id="buttonContainer" class="button-container">
     <div id="scrapeButton">
       <button class="scrapeButton" id="actionButton">Scrape Profile</button>
+      <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
     </div>
   </div>
   <div id="loadingPopup" class="loading-popup hidden">
     <div class="loading-content">
       <div class="loading-spinner"></div>
       <p>Gathering profile information...</p>
+    </div>
+  </div>
+  <div id="messageContainer" class="message-container hidden">
+    <div class="message-content">
+      <h3>Message</h3>
+      <p id="message"></p>
     </div>
   </div>
   <div id="profileData" class="profile-data hidden">
@@ -57,7 +64,7 @@
     <div id="savedProfiles" class="saved-profiles"></div>
   </div>
   <script src="../storage.js"></script>
-  <script src="../main.js"></script>
+  <script src="popup.js"></script>
 </body>
 </html>
 

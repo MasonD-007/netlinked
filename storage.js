@@ -70,3 +70,13 @@ async function printProfile(savedAt) {
     return false;
   }
 }
+
+async function saveGeneratedMessage(message) {
+  try {
+    await chrome.storage.local.set({ generatedMessage: message });
+    return true;
+  } catch (error) {
+    console.error('Error saving generated message:', error);
+    return false;
+  }
+}

@@ -43,12 +43,19 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         }
       });
     };
+    document.getElementById('openWebsiteButton').onclick = () => {
+      chrome.tabs.create({ url: 'website/web.html' });
+    };
   } else {
     // User is not on a LinkedIn profile
     document.getElementById('actionButton').onclick = () => {
       if (confirm("You're not on a LinkedIn profile page. Would you like to open your LinkedIn profile?")) {
         chrome.tabs.create({ url: 'https://www.linkedin.com/in/me' });
       }
+    };
+
+    document.getElementById('openWebsiteButton').onclick = () => {
+      chrome.tabs.create({ url: 'website/web.html' });
     };
   }
 });

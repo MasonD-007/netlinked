@@ -37,30 +37,47 @@ async function loadSettings() {
     let settingshtml = `
     <div class="settings-container">
         <h1>Settings</h1>
-        <h3>Test Gemini API Key</h3>
-        <input type="text" id="geminiApiKey" placeholder="Enter Gemini API Key">
-        <button onclick="saveGeminiApiKey()">Save</button>
-        <h3>Client Profile</h3>
-        <div class="profile-card">
-            <div class="top-row">
-                <h3>${clientProfile.name || 'Unknown Name'}</h3>
-                <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
-                <div class="profile-actions">
-                    <button onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
-                </div>
+        <div class="settings-section">
+            <h3>AI API Selection</h3>
+            <div class="select-wrapper">
+                <select id="aiApiSelect" class="settings-select">
+                    <option value="openai">OpenAI GPT</option>
+                    <option value="anthropic">Anthropic Claude</option>
+                    <option value="gemini">Google Gemini</option>
+                </select>
+                <input type="text" id="aiApiKey" placeholder="Enter API Key">
+                <button onclick="saveAIApiKey()">Save</button>
             </div>
-            <div class="bottom-row">
-                <h3>Title</h3>
-                <p>${clientProfile.headline || 'No title'}</p>
-                <h3>Location</h3>
-                <p>${clientProfile.location || 'No location'}</p>
-                <h3>About</h3>
+        </div>
+        <div class="settings-section">
+            <h3>Client Profile</h3>
+                <div class="top-row">
+                    <h3>${clientProfile.name || 'Unknown Name'}</h3>
+                    <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
+                    <div class="profile-actions">
+                        <button onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
+                    </div>
+                </div>
+                <div class="bottom-row">
+                    <h3>Title</h3>
+                    <p>${clientProfile.headline || 'No title'}</p>
+                    <h3>Location</h3>
+                    <p>${clientProfile.location || 'No location'}</p>
+                    <h3>About</h3>
                 <p>${clientProfile.about || 'No about'}</p>
             </div>
         </div>
     </div>
     `;
     document.getElementById('mainContentHeader').innerHTML = settingshtml;
+    
+    // Add event listener for the select
+    document.getElementById('aiApiSelect').addEventListener('change', function(e) {
+        // Handle the API selection change
+        const selectedApi = e.target.value;
+        console.log('Selected API:', selectedApi);
+        // You can add your logic here to save the selection or perform other actions
+    });
 }
 
 async function loadProfiles() {
@@ -77,14 +94,18 @@ async function loadProfiles() {
             console.log(profile);
             profilesHTML += `
                 <div class="profile-card">
-                    <h3>${profile.name || 'Unknown Name'}</h3>
-                    <p>Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
-                    <h3>Title</h3>
-                    <p>${profile.headline || 'No title'}</p>
-                    <h3>Location</h3>
-                    <p>${profile.location || 'No location'}</p>
-                    <h3>About</h3>
-                    <p>${profile.about || 'No about'}</p>
+                    <div class="top-row">
+                        <h3>${profile.name || 'Unknown Name'}</h3>
+                        <p>Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
+                    </div>
+                    <div class="bottom-row">
+                        <h3>Title</h3>
+                        <p>${profile.headline || 'No title'}</p>
+                        <h3>Location</h3>
+                        <p>${profile.location || 'No location'}</p>
+                        <h3>About</h3>
+                        <p>${profile.about || 'No about'}</p>
+                    </div>
                     <div class="profile-actions">
                         <button onclick="openProfileUrl(${profile.savedAt})">Open Profile</button>
                         <button onclick="deleteProfile(${profile.savedAt}).then(loadProfiles)">Delete</button>

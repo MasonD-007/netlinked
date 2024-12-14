@@ -28,7 +28,31 @@ async function getProfiles() {
   }
 }
 
+async function saveClientProfile(profileData) {
+  try {
+    await chrome.storage.local.set({ clientProfile: { ...profileData, savedAt: new Date().toISOString(), linkedinUrl: profileData.profileUrl || window.location.href } });
+    return true;
+  } catch (error) {
+    console.error('Error saving client profile:', error);
+    return false;
+  }
+}
+
+async function getClientProfile() {
+  try {
+    const result = await chrome.storage.local.get('clientProfile');
+    return result.clientProfile || null;
+  } catch (error) {
+    console.error('Error getting client profile:', error);
+    return null;
+  }
+}
+
 async function deleteProfile(savedAt) {
+  if (savedAt === 'clientProfile') {
+    console.error("Cannot delete client profile");
+    return false;
+  }
   try {
     const key = `profile_${new Date(savedAt).getTime()}`;
     await chrome.storage.local.remove(key);

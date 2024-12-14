@@ -82,6 +82,20 @@ body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.profile-card .top-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-card .bottom-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
 .profile-card h3 {
   margin-top: 0;
   color: #0077b5;

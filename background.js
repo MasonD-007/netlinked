@@ -69,6 +69,58 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         handleMessageGeneration();
         return true; // Keep the message channel open for async response
     }
+    else if (message.action === "OPEN_LINKEDIN") {
+        console.log("Opening LinkedIn");
+        chrome.tabs.create({ url: "https://www.linkedin.com/in/me/" }, (tab) => {
+            // Wait for the tab to finish loading
+            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+                if (tabId === tab.id && changeInfo.status === 'complete') {
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    
+                    // Now execute the scraping
+                    chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ['scrapeprofile/scraper.js']
+                    }, () => {
+                        chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: async () => {
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                const result = await scrapeLinkedInProfile();
+                                return result;
+                            }
+                        }, (results) => {
+                            const profileData = results[0].result;
+                            
+                            async function handleSkillsScraping() {
+                                try {
+                                    const originalUrl = await loadSkillPage(tab.id);
+                                    const results = await chrome.scripting.executeScript({
+                                        target: { tabId: tab.id },
+                                        func: scrapeSkills
+                                    });
+                                    const skills = results[0].result;
+                                    profileData.skills = skills;
+                                    
+                                    // Close the LinkedIn tab
+                                    chrome.tabs.remove(tab.id);
+                                    
+                                    // Send response with profile data
+                                    sendResponse({ profileData: profileData, success: true });
+                                } catch (error) {
+                                    console.error("Error during skills scraping:", error);
+                                    sendResponse({ success: false });
+                                }
+                            }
+
+                            handleSkillsScraping();
+                        });
+                    });
+                }
+            });
+        });
+        return true; // Keep the message channel open
+    }
 });
 
 //Scrape skills
@@ -160,3 +212,19 @@ async function callGemini(ClientData) { //gemini-2.0-flash-exp
 }
 
 //End of generate message
+
+chrome.runtime.onInstalled.addListener((details) => {
+    if (details.reason === "install") {
+        // Open the website
+        chrome.tabs.create({
+            url: chrome.runtime.getURL("website/web.html")
+        }, (tab) => {
+            // Show welcome message after the tab is created
+            setTimeout(() => {
+                chrome.tabs.sendMessage(tab.id, {
+                    type: "SHOW_WELCOME_MESSAGE"
+                });
+            }, 1000);
+        });
+    }
+});

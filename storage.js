@@ -28,7 +28,31 @@ async function getProfiles() {
   }
 }
 
+async function saveClientProfile(profileData) {
+  try {
+    await chrome.storage.local.set({ clientProfile: { ...profileData, savedAt: new Date().toISOString(), linkedinUrl: profileData.profileUrl || window.location.href } });
+    return true;
+  } catch (error) {
+    console.error('Error saving client profile:', error);
+    return false;
+  }
+}
+
+async function getClientProfile() {
+  try {
+    const result = await chrome.storage.local.get('clientProfile');
+    return result.clientProfile || null;
+  } catch (error) {
+    console.error('Error getting client profile:', error);
+    return null;
+  }
+}
+
 async function deleteProfile(savedAt) {
+  if (savedAt === 'clientProfile') {
+    console.error("Cannot delete client profile");
+    return false;
+  }
   try {
     const key = `profile_${new Date(savedAt).getTime()}`;
     await chrome.storage.local.remove(key);
@@ -44,8 +68,6 @@ async function openProfileUrl(savedAt) {
     const key = `profile_${new Date(savedAt).getTime()}`;
     const result = await chrome.storage.local.get(key);
     const profile = result[key];
-    console.log(profile); // Could this be used to create a website that shows all the profiles?
-    console.log(profile?.profileURL);
     
     if (profile?.profileURL) {
       chrome.tabs.create({ url: profile.profileURL });
@@ -79,4 +101,24 @@ async function saveGeneratedMessage(message) {
     console.error('Error saving generated message:', error);
     return false;
   }
+}
+
+async function saveAIApiKey(AItype, apiKey) {
+  const aiList = ["gemini", "openai", "anthropic"];
+  if (!aiList.includes(AItype)) {
+    console.error("Invalid AI type");
+    return false;
+  }
+  await chrome.storage.local.set({ [AItype]: apiKey });
+  return true;
+}
+
+async function getAIApiKey(AItype) {
+  const aiList = ["gemini", "openai", "anthropic"];
+  if (!aiList.includes(AItype)) {
+    console.error("Invalid AI type");
+    return null;
+  }
+  const result = await chrome.storage.local.get(AItype);
+  return result[AItype] || null;
 }

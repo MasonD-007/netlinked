@@ -195,6 +195,11 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
     const prompt = `
     You are writing a personalized message on LinkedIn based on the following information:
 
+    Rules:
+    - The message should be professional but friendly, and reference their shared professional interests or skills where relevant.
+    - Keep the message concise and engaging.
+    - The word count cant be more than 300 characters.
+
     Client (Sender) Information:
     - Name: ${ClientData.name}
     - Headline: ${ClientData.headline}

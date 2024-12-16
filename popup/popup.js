@@ -1,6 +1,5 @@
 // Add at the beginning of the file
 let currentProfileData = null;
-import config from "../config.js";
 
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
@@ -33,6 +32,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       });
     };
     document.getElementById('generateMessageButton').onclick = async () => {
+      document.getElementById('messageType').classList.remove('hidden');
+      const apiKey = await getStoredApiKey();
+      if (!apiKey) return;
+      
       //First make sure we have the clients data
       if (!currentProfileData) {
         alert("No profile data available. Please scrape a profile first.");
@@ -52,7 +55,18 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         return;
       }
       const recipientData = currentProfileData;
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: "initial", ClientData: clientData, RecipientData: recipientData, apiKey: config.geminiApiKey }, (response) => {
+      //See what type of message we want to generate
+      const messageType = document.querySelector('input[name="messageType"]:checked').value;
+      if (!messageType) {
+        alert("Please select a message type");
+        return;
+      }
+
+      //Hide the message type select
+      document.getElementById('messageType').classList.add('hidden');
+      console.log("Message type selected:", messageType);
+
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: messageType, ClientData: clientData, RecipientData: recipientData, apiKey: apiKey }, (response) => {
         if (response.success) {
           document.getElementById('buttonContainer').classList.add('hidden');
           document.getElementById('messageContainer').classList.remove('hidden');
@@ -224,4 +238,38 @@ async function displaySavedProfiles() {
       }
     }
   });
+}
+let apiKey = getAIApiKey('gemini');
+console.log("API key:", apiKey);
+if (apiKey.length > 0) {
+  document.getElementById('settings-section').classList.add('hidden');
+  document.getElementById('apiKeyInput').value = apiKey;
+}
+
+document.getElementById('saveApiKeyButton').addEventListener('click', async () => {
+    const apiKey = document.getElementById('apiKeyInput').value;
+  if (!apiKey) {
+    alert('Please enter an API key');
+    return;
+  }
+  
+  // Save the API key
+  const success = await saveAIApiKey('gemini', apiKey);
+  if (success) {
+    alert('API key saved successfully!');
+    document.getElementById('settings-section').classList.add('hidden');
+
+  } else {
+    alert('Failed to save API key');
+  }
+});
+
+// When you need to use the API key
+async function getStoredApiKey() {
+  const apiKey = await getAIApiKey('gemini');
+  if (!apiKey) {
+    alert('Please set up your Gemini API key in settings first');
+    return null;
+  }
+  return apiKey;
 }

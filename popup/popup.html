@@ -26,6 +26,12 @@
     <div class="data-field">
       <button class="scrapeButton" id="saveButton">Save Profile</button>
       <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
+      <form id="messageType" class="form-control">
+        <input type="radio" name="messageType" value="general-connection-message">General Connection Message</input>
+        <input type="radio" name="messageType" value="message-to-alumni">Message to Alumni</input>
+        <input type="radio" name="messageType" value="asking-for-referral">Asking for Referral</input>
+        <input type="radio" name="messageType" value="message-to-recruiter">Message to Recruiter</input>
+      </form>
     </div>
     <div class="data-field">
       <h3>Name:</h3>
@@ -64,8 +70,21 @@
     <h3>Saved Profiles</h3>
     <div id="savedProfiles" class="saved-profiles"></div>
   </div>
+  <div class="settings-section" id="settings-section">
+    <h3>API Settings</h3>
+    <div class="form-group">
+      <label for="apiKeyInput">Gemini API Key:</label>
+      <input 
+        type="password" 
+        id="apiKeyInput" 
+        placeholder="Enter your API key"
+        class="form-control"
+      />
+      <button id="saveApiKeyButton" class="btn btn-primary">Save API Key</button>
+    </div>
+  </div>
   <script src="../storage.js"></script>
-  <script src="popup.js"></script>
+  <script type="module" src="popup.js"></script>
 </body>
 </html>
 

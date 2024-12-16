@@ -29,6 +29,11 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         document.getElementById('mainContentHeader').innerHTML = '';
         loadSettings();
     });
+    if (document.getElementById('open-profile-btn')) {
+        document.getElementById('open-profile-btn').addEventListener('click',  function() {
+            console.log("open profile button clicked");
+        });
+    }
 });
 
 async function loadGeneratedMessage() {
@@ -77,7 +82,7 @@ async function loadSettings() {
                     <h3>${clientProfile.name || 'Unknown Name'}</h3>
                     <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
                     <div class="profile-actions">
-                        <button onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
+                        <button class="open-profile-btn" id="open-profile-btn" data-url="${clientProfile.url}">Open Profile</button>
                     </div>
                 </div>
                 <div class="bottom-row">
@@ -92,7 +97,7 @@ async function loadSettings() {
     </div>
     `;
     document.getElementById('mainContentHeader').innerHTML = settingshtml;
-    
+
     // Add event listener for the select
     document.getElementById('aiApiSelect').addEventListener('change', function(e) {
         // Handle the API selection change

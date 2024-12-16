@@ -103,14 +103,72 @@ async function saveGeneratedMessage(message) {
   }
 }
 
+async function encryptData(data) {
+  const encoder = new TextEncoder();
+  const dataBuffer = encoder.encode(data);
+  
+  // Generate a random key
+  const key = await crypto.subtle.generateKey(
+    { name: 'AES-GCM', length: 256 },
+    true,
+    ['encrypt', 'decrypt']
+  );
+  
+  // Generate a random IV
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  
+  // Encrypt the data
+  const encryptedData = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: iv },
+    key,
+    dataBuffer
+  );
+  
+  // Export the key
+  const exportedKey = await crypto.subtle.exportKey('raw', key);
+  
+  return {
+    encrypted: Array.from(new Uint8Array(encryptedData)),
+    iv: Array.from(iv),
+    key: Array.from(new Uint8Array(exportedKey))
+  };
+}
+
+async function decryptData(encrypted, key, iv) {
+  const importedKey = await crypto.subtle.importKey(
+    'raw',
+    new Uint8Array(key),
+    'AES-GCM',
+    true,
+    ['decrypt']
+  );
+  
+  const decryptedData = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: new Uint8Array(iv) },
+    importedKey,
+    new Uint8Array(encrypted)
+  );
+  
+  return new TextDecoder().decode(decryptedData);
+}
+
 async function saveAIApiKey(AItype, apiKey) {
   const aiList = ["gemini", "openai", "anthropic"];
   if (!aiList.includes(AItype)) {
     console.error("Invalid AI type");
     return false;
   }
-  await chrome.storage.local.set({ [AItype]: apiKey });
-  return true;
+  
+  try {
+    const encryptedData = await encryptData(apiKey);
+    await chrome.storage.local.set({ 
+      [AItype]: encryptedData
+    });
+    return true;
+  } catch (error) {
+    console.error('Error saving API key:', error);
+    return false;
+  }
 }
 
 async function getAIApiKey(AItype) {
@@ -119,6 +177,19 @@ async function getAIApiKey(AItype) {
     console.error("Invalid AI type");
     return null;
   }
-  const result = await chrome.storage.local.get(AItype);
-  return result[AItype] || null;
+  
+  try {
+    const result = await chrome.storage.local.get(AItype);
+    if (!result[AItype]) return null;
+    
+    const decrypted = await decryptData(
+      result[AItype].encrypted,
+      result[AItype].key,
+      result[AItype].iv
+    );
+    return decrypted;
+  } catch (error) {
+    console.error('Error getting API key:', error);
+    return null;
+  }
 }

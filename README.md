@@ -11,6 +11,12 @@ Future features:
     - Automatically send messages to your network to 
         increase the visibility of your own profile
 
+Message templates: [Message Templates](https://www.linkedin.com/pulse/6-message-templates-linkedin-connection-request-success-jason-yip/)
+- initial
+- follow-up
+- job application
+- networking
+
 ## What is this?
 This is a tool that helps you connect with people on LinkedIn. It uses the Gemini API to generate a draft of an introduction message for a LinkedIn connection request.
 

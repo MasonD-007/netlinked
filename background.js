@@ -1,5 +1,4 @@
 console.log("Background script loaded");
-import config from "./config.js";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Message received:", message)
@@ -56,9 +55,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     else if (message.action === "generateMessage") {
         console.log("Generating message");
+        console.log(message);
         async function handleMessageGeneration() {
             try {
-                const generatedMessage = await genMessage(message.ClientData);
+                const generatedMessage = await genMessage(message.ClientData, message.RecipientData, message.template, "gemini-1.5-flash", "AIzaSyBBrqWHR8u7pq8x1pibOIZEqcH4QRIJ1Xc");
                 //console.log("Message generated:", generatedMessage);
                 sendResponse({ message: generatedMessage, success: true });
             } catch (error) {
@@ -183,13 +183,36 @@ async function scrapeSkills() {
 //End of scrape skills
 
 //Generate message
-async function genMessage(ClientData) {
-    const message = await callGemini(ClientData);
+async function genMessage(ClientData, RecipientData, template, model, apiKey) {
+    const message = await callGemini(ClientData, RecipientData, template, model, apiKey);
     return message;
 }
 
-async function callGemini(ClientData) { //gemini-2.0-flash-exp
-    const apiKey = config.geminiApiKey;
+async function callGemini(ClientData, RecipientData, template, model, apiKey) {
+    console.log("Calling Gemini with model:", model, "and API key:", apiKey);
+    
+    // Create a detailed prompt that includes context from both profiles
+    const prompt = `
+    You are writing a personalized message on LinkedIn based on the following information:
+
+    Client (Sender) Information:
+    - Name: ${ClientData.name}
+    - Headline: ${ClientData.headline}
+    - Current Role: ${ClientData.currentRole}
+    - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
+
+    Recipient Information:
+    - Name: ${RecipientData.name}
+    - Headline: ${RecipientData.headline}
+    - Current Role: ${RecipientData.currentRole}
+    - Skills: ${RecipientData.skills.map(s => s.skill).join(', ')}
+
+    Template Type: ${template}
+
+    Write a personalized ${template} message from ${ClientData.name} to ${RecipientData.name}. 
+    Make it professional but friendly, and reference their shared professional interests or skills where relevant.
+    Keep the message concise and engaging.`;
+
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
     const response = await fetch(url, {
         method: "POST",
@@ -197,13 +220,17 @@ async function callGemini(ClientData) { //gemini-2.0-flash-exp
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            "contents": [{ "parts": [{ "text": "Write a message to " + ClientData.name + " wishing them a happy birthday." }] }]
+            "contents": [{ 
+                "parts": [{ 
+                    "text": prompt 
+                }] 
+            }]
         })
     });
+
     const data = await response.json();
     console.log("Gemini response:", data);
     
-    // Check if we have a valid response with candidates
     if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
         throw new Error("Invalid response from Gemini API");
     }

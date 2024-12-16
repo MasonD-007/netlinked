@@ -24,16 +24,34 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
         if (response.success) {
           displayProfileData(response.profileData);
+          currentProfileData = response.profileData;
           document.getElementById('loadingPopup').classList.add('hidden');
         } else {
           alert("Failed to scrape profile data");
         }
       });
     };
-    document.getElementById('generateMessageButton').onclick = () => {
+    document.getElementById('generateMessageButton').onclick = async () => {
       //First make sure we have the clients data
-      //second scrape the current profile data
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", ClientData: { name: "Mason D" } }, (response) => {
+      if (!currentProfileData) {
+        alert("No profile data available. Please scrape a profile first.");
+        //second scrape the current profile data
+        chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+          if (response.success) {
+            displayProfileData(response.profileData);
+            currentProfileData = response.profileData;
+          }
+        });
+        return;
+      }
+      //generate the message with the recipient data and client data
+      const clientData = await getClientProfile();
+      if (!clientData) {
+        alert("No client data available. Please update your profile first.");
+        return;
+      }
+      const recipientData = currentProfileData;
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: "initial", ClientData: clientData, RecipientData: recipientData }, (response) => {
         if (response.success) {
           document.getElementById('buttonContainer').classList.add('hidden');
           document.getElementById('messageContainer').classList.remove('hidden');

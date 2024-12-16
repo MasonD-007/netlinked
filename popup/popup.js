@@ -1,5 +1,6 @@
 // Add at the beginning of the file
 let currentProfileData = null;
+import config from "../config.js";
 
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
@@ -51,7 +52,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         return;
       }
       const recipientData = currentProfileData;
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: "initial", ClientData: clientData, RecipientData: recipientData }, (response) => {
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: "initial", ClientData: clientData, RecipientData: recipientData, apiKey: config.geminiApiKey }, (response) => {
         if (response.success) {
           document.getElementById('buttonContainer').classList.add('hidden');
           document.getElementById('messageContainer').classList.remove('hidden');

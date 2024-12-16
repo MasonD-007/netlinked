@@ -58,7 +58,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(message);
         async function handleMessageGeneration() {
             try {
-                const generatedMessage = await genMessage(message.ClientData, message.RecipientData, message.template, "gemini-1.5-flash", "AIzaSyBBrqWHR8u7pq8x1pibOIZEqcH4QRIJ1Xc");
+                const generatedMessage = await genMessage(message.ClientData, message.RecipientData, message.template, "gemini-1.5-flash", message.apiKey);
                 //console.log("Message generated:", generatedMessage);
                 sendResponse({ message: generatedMessage, success: true });
             } catch (error) {

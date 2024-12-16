@@ -33,6 +33,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     };
     document.getElementById('generateMessageButton').onclick = async () => {
       document.getElementById('messageType').classList.remove('hidden');
+      document.getElementById('loadingPopup').classList.remove('hidden');
       const apiKey = await getStoredApiKey();
       if (!apiKey) return;
       
@@ -66,15 +67,19 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       document.getElementById('messageType').classList.add('hidden');
       console.log("Message type selected:", messageType);
 
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: messageType, ClientData: clientData, RecipientData: recipientData, apiKey: apiKey }, (response) => {
+      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: messageType, ClientData: clientData, RecipientData: recipientData, apiKey: apiKey }, async (response) => {
         if (response.success) {
           document.getElementById('buttonContainer').classList.add('hidden');
           document.getElementById('messageContainer').classList.remove('hidden');
           document.getElementById('message').textContent = response.message;
+          //save the generated message to storage
+          await saveGeneratedMessage(response.message, recipientData, messageType);
         } else {
           alert("Failed to generate message");
         }
       });
+      document.getElementById('loadingPopup').classList.add('hidden');
+      document.getElementById('generateMessageButton').classList.add('hidden');
     };
     document.getElementById('openWebsiteButton').onclick = () => {
       chrome.tabs.create({ url: 'website/web.html' });
@@ -239,13 +244,14 @@ async function displaySavedProfiles() {
     }
   });
 }
-let apiKey = getAIApiKey('gemini');
+let apiKey = await getAIApiKey('gemini');
 console.log("API key:", apiKey);
-if (apiKey.length > 0) {
-  document.getElementById('settings-section').classList.add('hidden');
-  document.getElementById('apiKeyInput').value = apiKey;
+//if the api key is not set, hide the settings section 
+if (apiKey == null) {
+  document.getElementById('settings-section').classList.remove('hidden');
 }
 
+//add event listener to the save api key button
 document.getElementById('saveApiKeyButton').addEventListener('click', async () => {
     const apiKey = document.getElementById('apiKeyInput').value;
   if (!apiKey) {

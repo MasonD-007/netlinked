@@ -13,14 +13,14 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         document.getElementById('mainContent').classList.remove('hidden');
         setActive('Jobs');
         console.log("switched to jobs");
-        document.getElementById('mainContentHeader').innerHTML = '';
+        document.getElementById('mainContentHeader').innerHTML = '<h1>IN DEVELOPMENT</h1>';
     });
     document.getElementById('Messages').addEventListener('click', () => {
         document.getElementById('mainContent').classList.remove('hidden');
         setActive('Messages');
         console.log("switched to messages");
         document.getElementById('mainContentHeader').innerHTML = '';
-        document.getElementById('data').textContent = "Messages page";
+        loadGeneratedMessage();
     });
     document.getElementById('Settings').addEventListener('click', () => {
         document.getElementById('mainContent').classList.remove('hidden');
@@ -29,7 +29,34 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         document.getElementById('mainContentHeader').innerHTML = '';
         loadSettings();
     });
+    if (document.getElementById('open-profile-btn')) {
+        document.getElementById('open-profile-btn').addEventListener('click',  function() {
+            console.log("open profile button clicked");
+        });
+    }
 });
+
+async function loadGeneratedMessage() {
+    document.getElementById('mainContentHeader').textContent = "HELLO WORLD OF MESSAGES";
+    const messages = await getGeneratedMessage();
+    console.log("Messages:", messages);
+    document.getElementById('mainContentHeader').innerHTML = messages.map(message => `
+        <div class="message-card">
+            <div class="message-header">
+                <div class="message-header-left">
+                    <h3>To: ${message.RecipientName}</h3>
+                    <p>Type: ${message.messageType}</p>
+                </div>
+                <div class="message-header-right">
+                    <p>Sent: ${new Date(message.timestamp).toLocaleDateString()}</p>
+                </div>
+            </div>
+            <div class="message-body">
+                <p>${message.message}</p>
+            </div>
+        </div>
+    `).join('');
+}
 
 async function loadSettings() {
     const clientProfile = await getClientProfile();
@@ -55,7 +82,7 @@ async function loadSettings() {
                     <h3>${clientProfile.name || 'Unknown Name'}</h3>
                     <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
                     <div class="profile-actions">
-                        <button onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
+                        <button class="open-profile-btn" id="open-profile-btn" data-url="${clientProfile.url}">Open Profile</button>
                     </div>
                 </div>
                 <div class="bottom-row">
@@ -70,13 +97,15 @@ async function loadSettings() {
     </div>
     `;
     document.getElementById('mainContentHeader').innerHTML = settingshtml;
-    
+
     // Add event listener for the select
     document.getElementById('aiApiSelect').addEventListener('change', function(e) {
         // Handle the API selection change
         const selectedApi = e.target.value;
         console.log('Selected API:', selectedApi);
         // You can add your logic here to save the selection or perform other actions
+        const apiKey = document.getElementById('aiApiKey').value;
+        saveAIApiKey(selectedApi, apiKey);
     });
 }
 
@@ -91,7 +120,6 @@ async function loadProfiles() {
         return;
     } else {
         profiles.forEach(profile => {
-            console.log(profile);
             profilesHTML += `
                 <div class="profile-card">
                     <div class="top-row">

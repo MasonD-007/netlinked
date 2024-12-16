@@ -214,3 +214,40 @@ body {
     border-color: #005582;
     box-shadow: 0 0 0 2px rgba(0,119,181,0.2);
 }
+
+.message-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.message-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.message-header-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.message-header-right {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-end;
+}
+
+.message-body {
+    margin-top: 10px;
+}
+
+.message-card h3 {
+    margin-top: 0;
+    color: #0077b5;
+}

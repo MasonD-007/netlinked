@@ -93,13 +93,41 @@ async function printProfile(savedAt) {
   }
 }
 
-async function saveGeneratedMessage(message) {
+async function saveGeneratedMessage(message, RecipientData, messageType) {
   try {
-    await chrome.storage.local.set({ generatedMessage: message });
+    // Get existing messages first
+    const result = await chrome.storage.local.get('generatedMessages');
+    const existingMessages = result.generatedMessages || [];
+    
+    // Create new message object with timestamp
+    const newMessage = {
+      message: message,
+      RecipientName: RecipientData.name,
+      RecipientUrl: RecipientData.profileUrl,
+      messageType: messageType,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Add new message to the beginning of the array
+    existingMessages.unshift(newMessage);
+    
+    // Store the updated messages array
+    await chrome.storage.local.set({ generatedMessages: existingMessages });
     return true;
   } catch (error) {
     console.error('Error saving generated message:', error);
     return false;
+  }
+}
+
+async function getGeneratedMessage() {
+  try {
+    const result = await chrome.storage.local.get('generatedMessages');
+    console.log(result);
+    return result.generatedMessages || [];
+  } catch (error) {
+    console.error('Error getting generated messages:', error);
+    return [];
   }
 }
 

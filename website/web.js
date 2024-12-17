@@ -29,14 +29,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         document.getElementById('mainContentHeader').innerHTML = '';
         loadSettings();
     });
-    if (document.getElementById('open-profile-btn')) {
-        document.getElementById('open-profile-btn').addEventListener('click',  function() {
-            console.log("open profile button clicked");
-        });
-    }
 });
 
-async function loadGeneratedMessage() {
+async function loadGeneratedMessage() { //Done
     document.getElementById('mainContentHeader').textContent = "HELLO WORLD OF MESSAGES";
     const messages = await getGeneratedMessage();
     console.log("Messages:", messages);
@@ -73,7 +68,7 @@ async function loadSettings() {
                     <option value="gemini">Google Gemini</option>
                 </select>
                 <input type="text" id="aiApiKey" placeholder="Enter API Key">
-                <button onclick="saveAIApiKey()">Save</button>
+                <button id="saveApiKeyBtn">Save</button>
             </div>
         </div>
         <div class="settings-section">
@@ -82,7 +77,7 @@ async function loadSettings() {
                     <h3>${clientProfile.name || 'Unknown Name'}</h3>
                     <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
                     <div class="profile-actions">
-                        <button class="open-profile-btn" id="open-profile-btn" data-url="${clientProfile.url}">Open Profile</button>
+                        <button class="open-profile-btn" id="open-profile-btn" onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
                     </div>
                 </div>
                 <div class="bottom-row">
@@ -97,6 +92,13 @@ async function loadSettings() {
     </div>
     `;
     document.getElementById('mainContentHeader').innerHTML = settingshtml;
+
+    // Add event listeners
+    document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
+        const selectedApi = document.getElementById('aiApiSelect').value;
+        const apiKey = document.getElementById('aiApiKey').value;
+        saveAIApiKey(selectedApi, apiKey);
+    });
 
     // Add event listener for the select
     document.getElementById('aiApiSelect').addEventListener('change', function(e) {
@@ -135,8 +137,8 @@ async function loadProfiles() {
                         <p>${profile.about || 'No about'}</p>
                     </div>
                     <div class="profile-actions">
-                        <button onclick="openProfileUrl(${profile.savedAt})">Open Profile</button>
-                        <button onclick="deleteProfile(${profile.savedAt}).then(loadProfiles)">Delete</button>
+                        <button class="open-profile-btn" data-timestamp="${profile.savedAt}">Open Profile</button>
+                        <button class="delete-profile-btn" data-timestamp="${profile.savedAt}">Delete</button>
                     </div>
                 </div>
             `;
@@ -145,6 +147,21 @@ async function loadProfiles() {
     profilesHTML += '</div>';
     
     mainContent.innerHTML = profilesHTML;
+
+    // Add event listeners after adding the HTML
+    document.querySelectorAll('.open-profile-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const timestamp = this.getAttribute('data-timestamp');
+            openProfileUrl(timestamp);
+        });
+    });
+
+    document.querySelectorAll('.delete-profile-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const timestamp = this.getAttribute('data-timestamp');
+            deleteProfile(timestamp).then(loadProfiles);
+        });
+    });
 }
 
 function setActive(buttonid) {
@@ -211,4 +228,12 @@ function showWelcomeDialog() {
             });
         });
     });
+}
+
+async function openProfileUrl(timestamp) {
+    const profiles = await getProfiles();
+    const profile = profiles.find(p => p.savedAt === timestamp);
+    if (profile && profile.url) {
+        chrome.tabs.create({ url: profile.url });
+    }
 }

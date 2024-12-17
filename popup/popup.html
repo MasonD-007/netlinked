@@ -1,3 +1,6 @@
+<!--      {<button class="scrapeButton" id="actionButton">Scrape Profile</button>}
+-->
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,8 +9,45 @@
 <body>
   <div id="buttonContainer" class="button-container">
     <div id="scrapeButton">
-      <button class="scrapeButton" id="actionButton">Scrape Profile</button>
+      <button class="scrapeButton" id="saveProfileButton">Save Profile</button>
       <button class="scrapeButton" id="openWebsiteButton">Open Website</button>
+      <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
+      <div id="messageOptions" class="messageOptions">
+        <form id="aiApiSelect" class="aiApiSelect">
+          <h3>AI API</h3>
+          <label>
+            <input type="radio" name="aiApi" value="gemini" checked>
+            Gemini
+          </label>
+          <label>
+            <input type="radio" name="aiApi" value="openai">
+            OpenAI
+          </label>
+          <label>
+            <input type="radio" name="aiApi" value="anthropic">
+            Anthropic
+          </label>
+        </form>
+        <form id="messageType" class="messageType">
+          <h3>Message Type</h3>
+          <label>
+            <input type="radio" name="messageType" value="general-connection-message" checked>
+            Connection Message
+          </label>
+          <label>
+            <input type="radio" name="messageType" value="message-to-alumni">
+            Message to Alumni
+          </label>
+          <label>
+            <input type="radio" name="messageType" value="asking-for-referral">
+            Asking for Referral
+          </label>
+          <label>
+            <input type="radio" name="messageType" value="message-to-recruiter">
+            Message to Recruiter
+          </label>
+        </form>
+      </div>
     </div>
   </div>
   <div id="loadingPopup" class="loading-popup hidden">
@@ -26,12 +66,42 @@
     <div class="data-field">
       <button class="scrapeButton" id="saveButton">Save Profile</button>
       <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
-      <form id="messageType" class="form-control">
-        <input type="radio" name="messageType" value="general-connection-message">General Connection Message</input>
-        <input type="radio" name="messageType" value="message-to-alumni">Message to Alumni</input>
-        <input type="radio" name="messageType" value="asking-for-referral">Asking for Referral</input>
-        <input type="radio" name="messageType" value="message-to-recruiter">Message to Recruiter</input>
-      </form>
+      <div id="messageOptions" class="messageOptions">
+        <form id="aiApiSelect" class="aiApiSelect">
+          <h3>AI API</h3>
+          <label>
+            <input type="radio" name="aiApi" value="gemini" checked>
+            Gemini
+          </label>
+          <label>
+            <input type="radio" name="aiApi" value="openai">
+            OpenAI
+          </label>
+          <label>
+            <input type="radio" name="aiApi" value="anthropic">
+            Anthropic
+          </label>
+        </form>
+        <form id="messageType" class="messageType">
+          <h3>Message Type</h3>
+          <label>
+            <input type="radio" name="messageType" value="general-connection-message" checked>
+            Connection Message
+          </label>
+          <label>
+            <input type="radio" name="messageType" value="message-to-alumni">
+            Message to Alumni
+          </label>
+          <label>
+            <input type="radio" name="messageType" value="asking-for-referral">
+            Asking for Referral
+          </label>
+          <label>
+            <input type="radio" name="messageType" value="message-to-recruiter">
+            Message to Recruiter
+          </label>
+        </form>
+      </div>
     </div>
     <div class="data-field">
       <h3>Name:</h3>

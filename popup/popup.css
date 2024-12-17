@@ -160,3 +160,39 @@ body {
   display: none;
 }
 
+.messageOptions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.messageOptions h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.aiApiSelect {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.messageType {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-control input[type="radio"] {
+  margin-left: 0;
+}
+
+.form-control label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

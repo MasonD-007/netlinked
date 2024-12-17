@@ -7,16 +7,16 @@ function isLinkedInProfilePage(url) {
   return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url);
 }
 
-document.getElementById('actionButton').addEventListener('click', () => {
-  document.getElementById('buttonContainer').classList.add('hidden');
-  document.getElementById('profileData').classList.remove('hidden');
-});
+//document.getElementById('actionButton').addEventListener('click', () => {
+//  document.getElementById('buttonContainer').classList.add('hidden');
+//  document.getElementById('profileData').classList.remove('hidden');
+//});
 
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
     // User is on a LinkedIn profile
-    document.getElementById('actionButton').onclick = () => {
+    /*document.getElementById('actionButton').onclick = () => {
       // Show loading popup
       document.getElementById('loadingPopup').classList.remove('hidden');
       
@@ -30,67 +30,136 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
           alert("Failed to scrape profile data");
         }
       });
+    };*/
+
+    //save profile button
+    document.getElementById('saveProfileButton').onclick = async () => {
+      document.getElementById('loadingPopup').classList.remove('hidden');
+      
+      try {
+        // Wait for the scraping to complete using a Promise
+        const scrapedData = await new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+            if (response.success) {
+              resolve(response.profileData);
+            } else {
+              reject(new Error("Failed to scrape profile data"));
+            }
+          });
+        });
+        
+        // Update currentProfileData with the scraped data
+        currentProfileData = scrapedData;
+        console.log("Scraped profile data:", currentProfileData);
+        
+        // Now that we have the data, save the profile
+        await saveProfile(currentProfileData);
+        
+      } catch (error) {
+        console.error(error);
+        alert("Failed to save profile data");
+      } finally {
+        document.getElementById('loadingPopup').classList.add('hidden');
+      }
     };
+
+    //generate message button
     document.getElementById('generateMessageButton').onclick = async () => {
       document.getElementById('messageType').classList.remove('hidden');
       document.getElementById('loadingPopup').classList.remove('hidden');
-      const apiKey = await getStoredApiKey();
-      if (!apiKey) return;
       
-      //First make sure we have the clients data
-      if (!currentProfileData) {
-        alert("No profile data available. Please scrape a profile first.");
-        //second scrape the current profile data
-        chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+      try {
+
+        //See what type of message we want to generate
+        const messageType = document.querySelector('input[name="messageType"]:checked').value;
+        if (!messageType) {
+          alert("Please select a message type");
+          return;
+        }
+
+        //See what ai api we want to use
+        const aiApi = document.querySelector('input[name="aiApi"]:checked').value;
+        if (!aiApi) {
+          alert("Please select an AI API");
+          return;
+        }
+
+        //get the api key
+        const apiKey = await getAIApiKey(aiApi);
+        console.log("API key:", apiKey + " for " + aiApi);
+        if (!apiKey) {
+          alert("Please set up your " + aiApi + " API key in settings first.");
+          return;
+        }
+
+
+        //Then make sure we have the clients data
+        const clientData = await getClientProfile();
+        if (!clientData) {
+          alert("No client data available. Please update your profile first.");
+          return;
+        }
+
+        //if we don't have the recipient data, scrape it
+        if (!currentProfileData) {
+          //second scrape the current profile data
+          currentProfileData = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+              if (response.success) {
+                resolve(response.profileData);
+              } else {
+                reject(new Error("Failed to scrape profile"));
+              }
+            });
+          });
+        }
+
+        //Hide the message type select
+        document.getElementById('messageType').classList.add('hidden');
+        console.log("Message type selected:", messageType);
+
+        chrome.runtime.sendMessage({ 
+          tabId: tabs[0].id, 
+          action: "generateMessage", 
+          template: messageType, 
+          ClientData: clientData, 
+          RecipientData: currentProfileData, 
+          apiKey: apiKey,
+          aiApi: aiApi
+        }, async (response) => {
           if (response.success) {
-            displayProfileData(response.profileData);
-            currentProfileData = response.profileData;
+            document.getElementById('buttonContainer').classList.add('hidden');
+            document.getElementById('messageContainer').classList.remove('hidden');
+            document.getElementById('message').textContent = response.message;
+            await saveGeneratedMessage(response.message, currentProfileData, messageType);
+          } else {
+            alert("Failed to generate message");
           }
         });
-        return;
+        document.getElementById('generateMessageButton').classList.add('hidden');
+      } catch (error) {
+        console.error(error);
+        alert("An error occurred while generating the message");
+      } finally {
+        document.getElementById('loadingPopup').classList.add('hidden');
       }
-      //generate the message with the recipient data and client data
-      const clientData = await getClientProfile();
-      if (!clientData) {
-        alert("No client data available. Please update your profile first.");
-        return;
-      }
-      const recipientData = currentProfileData;
-      //See what type of message we want to generate
-      const messageType = document.querySelector('input[name="messageType"]:checked').value;
-      if (!messageType) {
-        alert("Please select a message type");
-        return;
-      }
-
-      //Hide the message type select
-      document.getElementById('messageType').classList.add('hidden');
-      console.log("Message type selected:", messageType);
-
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "generateMessage", template: messageType, ClientData: clientData, RecipientData: recipientData, apiKey: apiKey }, async (response) => {
-        if (response.success) {
-          document.getElementById('buttonContainer').classList.add('hidden');
-          document.getElementById('messageContainer').classList.remove('hidden');
-          document.getElementById('message').textContent = response.message;
-          //save the generated message to storage
-          await saveGeneratedMessage(response.message, recipientData, messageType);
-        } else {
-          alert("Failed to generate message");
-        }
-      });
-      document.getElementById('loadingPopup').classList.add('hidden');
-      document.getElementById('generateMessageButton').classList.add('hidden');
     };
     document.getElementById('openWebsiteButton').onclick = () => {
       chrome.tabs.create({ url: 'website/web.html' });
     };
   } else {
     // User is not on a LinkedIn profile
-    document.getElementById('actionButton').onclick = () => {
+    document.getElementById('saveProfileButton').onclick = () => {
       if (confirm("You're not on a LinkedIn profile page. Would you like to open your LinkedIn profile?")) {
         chrome.tabs.create({ url: 'https://www.linkedin.com/in/me' });
       }
     };
+
+    document.getElementById('generateMessageButton').onclick = () => {
+      if (confirm("You're not on a LinkedIn profile page. Would you like to open your LinkedIn profile?")) {
+        chrome.tabs.create({ url: 'https://www.linkedin.com/in/me' });
+      }
+    }
 
     document.getElementById('openWebsiteButton').onclick = () => {
       chrome.tabs.create({ url: 'website/web.html' });
@@ -269,13 +338,3 @@ document.getElementById('saveApiKeyButton').addEventListener('click', async () =
     alert('Failed to save API key');
   }
 });
-
-// When you need to use the API key
-async function getStoredApiKey() {
-  const apiKey = await getAIApiKey('gemini');
-  if (!apiKey) {
-    alert('Please set up your Gemini API key in settings first');
-    return null;
-  }
-  return apiKey;
-}

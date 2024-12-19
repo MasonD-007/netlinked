@@ -29,5 +29,6 @@ This is a tool that helps you connect with people on LinkedIn. It uses the Gemin
 1. Copy `config.example.js` to `config.js`
 2. Add your Gemini API key to `config.js`
 
-
-
+## TODO
+- somehow keep the given gemini secret key secure
+- create the templates for the generated messages

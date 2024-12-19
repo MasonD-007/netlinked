@@ -1,11 +1,22 @@
 // Storage helper functions
-async function saveProfile(profileData) {
+async function saveProfile(profileData, connectionType) {
   try {
+    // Validate connection type
+    const validTypes = ['fellow-students', 'alumni', 'industry', 'recruiters', 'other'];
+    if (!validTypes.includes(connectionType)) {
+      console.error('Invalid connection type');
+      return false;
+    }
+
+    // Ensure we have a consistent URL property
+    const profileUrl = profileData.profileUrl || profileData.linkedinUrl || profileData.profileURL || profileData.url || window.location.href;
+    
     await chrome.storage.local.set({
       [`profile_${Date.now()}`]: {
         ...profileData,
         savedAt: new Date().toISOString(),
-        linkedinUrl: profileData.profileUrl || window.location.href
+        profileURL: profileUrl,
+        connectionType: connectionType // Add connection type to stored data
       }
     });
     return true;
@@ -41,7 +52,16 @@ async function getProfiles() {
 
 async function saveClientProfile(profileData) {
   try {
-    await chrome.storage.local.set({ clientProfile: { ...profileData, savedAt: new Date().toISOString(), linkedinUrl: profileData.profileUrl || window.location.href } });
+    // Ensure we have a consistent URL property
+    const profileUrl = profileData.profileUrl || profileData.linkedinUrl || profileData.profileURL || profileData.url || window.location.href;
+    
+    await chrome.storage.local.set({ 
+      clientProfile: { 
+        ...profileData, 
+        savedAt: new Date().toISOString(), 
+        profileURL: profileUrl // Store URL consistently as profileURL
+      } 
+    });
     return true;
   } catch (error) {
     console.error('Error saving client profile:', error);
@@ -74,23 +94,6 @@ async function deleteProfile(savedAt) {
   }
 }
 
-async function openProfileUrl(savedAt) {
-  try {
-    const key = `profile_${new Date(savedAt).getTime()}`;
-    const result = await chrome.storage.local.get(key);
-    const profile = result[key];
-    
-    if (profile?.profileURL) {
-      chrome.tabs.create({ url: profile.profileURL });
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('Error opening profile URL:', error);
-    return false;
-  }
-} 
-
 async function printProfile(savedAt) {
   try {
     const key = `profile_${new Date(savedAt).getTime()}`;
@@ -114,7 +117,7 @@ async function saveGeneratedMessage(message, RecipientData, messageType) {
     const newMessage = {
       message: message,
       RecipientName: RecipientData.name,
-      RecipientUrl: RecipientData.profileUrl,
+      RecipientUrl: RecipientData.profileURL,
       messageType: messageType,
       timestamp: new Date().toISOString()
     };
@@ -134,7 +137,6 @@ async function saveGeneratedMessage(message, RecipientData, messageType) {
 async function getGeneratedMessage() {
   try {
     const result = await chrome.storage.local.get('generatedMessages');
-    console.log(result);
     return result.generatedMessages || [];
   } catch (error) {
     console.error('Error getting generated messages:', error);
@@ -192,7 +194,7 @@ async function decryptData(encrypted, key, iv) {
 }
 
 async function saveAIApiKey(AItype, apiKey) {
-  const aiList = ["gemini", "openai", "anthropic"];
+  const aiList = ["gemini", "chatgpt", "claude"];
   if (!aiList.includes(AItype)) {
     console.error("Invalid AI type");
     return false;
@@ -211,7 +213,7 @@ async function saveAIApiKey(AItype, apiKey) {
 }
 
 async function getAIApiKey(AItype) {
-  const aiList = ["gemini", "openai", "anthropic"];
+  const aiList = ["gemini", "chatgpt", "claude"];
   if (!aiList.includes(AItype)) {
     console.error("Invalid AI type");
     return null;

@@ -4,6 +4,7 @@
     <title>Netlinked</title>
     <link rel="stylesheet" href="web.css">
     <link rel="icon" href="/netlinked.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   </head>
   <body>
     <div id="webContainer">
@@ -34,6 +35,16 @@
 
           <!-- Messages Section -->
           <div id="MessagesSection" class="content-section hidden">
+            <div class="messages-filters">
+                <div class="filter-group">
+                    <select id="recipientFilter" class="settings-select">
+                        <option value="">All Recipients</option>
+                    </select>
+                    <select id="typeFilter" class="settings-select">
+                        <option value="">All Message Types</option>
+                    </select>
+                </div>
+            </div>
             <!-- Message cards will be inserted here by JavaScript -->
           </div>
 
@@ -41,20 +52,36 @@
           <div id="SettingsSection" class="content-section hidden">
             <div class="settings-container">
               <h1>Settings</h1>
-              <div class="settings-section">
-                <h3>AI API Selection</h3>
-                <div class="select-wrapper">
-                  <select id="aiApiSelect" class="settings-select">
-                    <option value="openai">OpenAI GPT</option>
-                    <option value="anthropic">Anthropic Claude</option>
-                    <option value="gemini">Google Gemini</option>
-                  </select>
-                  <input type="text" id="aiApiKey" placeholder="Enter API Key">
-                  <button id="saveApiKeyBtn">Save</button>
-                </div>
-              </div>
               <div class="settings-section" id="clientProfileSection">
                 <!-- Client profile will be inserted here by JavaScript -->
+                <button id="refreshProfileBtn" class="secondary-button">Refresh Profile Data</button>
+              </div>
+              <div class="settings-section">
+                <h3>AI API Settings</h3>
+                <div class="api-settings-container">
+                    <div class="api-input-group">
+                        <select id="aiApiSelect" class="settings-select">
+                            <option value="gemini">Gemini</option>
+                            <option value="chatgpt">ChatGPT (Coming Soon)</option>
+                            <option value="claude">Claude (Coming Soon)</option>
+                        </select>
+                        <input type="text" id="aiApiKey" placeholder="Enter API Key">
+                        <button id="saveApiKeyBtn">Save</button>
+                    </div>
+                    <button id="testApiKeysBtn" class="secondary-button">Test Saved API Keys</button>
+                </div>
+              </div>
+              <div class="settings-section">
+                <h3>Theme Settings</h3>
+                <div class="select-wrapper">
+                  <select id="themeSelect" class="settings-select">
+                    <option value="#0077b5">LinkedIn Blue</option>
+                    <option value="#2ECC71">Green</option>
+                    <option value="#E74C3C">Red</option>
+                    <option value="#9B59B6">Purple</option>
+                    <option value="#34495E">Dark Blue</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

@@ -5,27 +5,34 @@
 <html>
 <head>
   <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
+  <div id="navBar" class="nav-bar">
+    <button id="backButton" class="nav-button hidden"><i class="fa-solid fa-arrow-left"></i> Back</button>
+    <button id="websiteButton" class="nav-button"><i class="fa-solid fa-globe"></i> Website</button>
+  </div>
   <div id="buttonContainer" class="button-container">
     <div id="scrapeButton">
-      <button class="scrapeButton" id="saveProfileButton">Save Profile</button>
-      <button class="scrapeButton" id="openWebsiteButton">Open Website</button>
-      <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
+      <button class="scrapeButton" id="saveProfileButton"><i class="fa-solid fa-save"></i> Save Profile</button>
+      <button class="scrapeButton" id="openWebsiteButton"><i class="fa-solid fa-external-link"></i> Open Website</button>
+      <button class="scrapeButton" id="generateMessageButton"><i class="fa-solid fa-message"></i> Generate Message</button>
       <div id="messageOptions" class="messageOptions">
         <form id="aiApiSelect" class="aiApiSelect">
-          <h3>AI API</h3>
+          <h3>AI Provider</h3>
           <label>
             <input type="radio" name="aiApi" value="gemini" checked>
             Gemini
           </label>
           <label>
-            <input type="radio" name="aiApi" value="openai">
-            OpenAI
+            <input type="radio" name="aiApi" value="chatgpt">
+            ChatGPT
+            <span id="chatgpt-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
           <label>
-            <input type="radio" name="aiApi" value="anthropic">
-            Anthropic
+            <input type="radio" name="aiApi" value="claude">
+            Claude
+            <span id="claude-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
         </form>
         <form id="messageType" class="messageType">
@@ -64,8 +71,8 @@
   </div>
   <div id="profileData" class="profile-data hidden">
     <div class="data-field">
-      <button class="scrapeButton" id="saveButton">Save Profile</button>
-      <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
+      <button class="scrapeButton" id="saveButton"><i class="fa-solid fa-save"></i> Save Profile</button>
+      <button class="scrapeButton" id="generateMessageButton"><i class="fa-solid fa-message"></i> Generate Message</button>
       <div id="messageOptions" class="messageOptions">
         <form id="aiApiSelect" class="aiApiSelect">
           <h3>AI API</h3>
@@ -74,12 +81,14 @@
             Gemini
           </label>
           <label>
-            <input type="radio" name="aiApi" value="openai">
-            OpenAI
+            <input type="radio" name="aiApi" value="chatgpt">
+            ChatGPT
+            <span id="chatgpt-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
           <label>
-            <input type="radio" name="aiApi" value="anthropic">
-            Anthropic
+            <input type="radio" name="aiApi" value="claude">
+            Claude
+            <span id="claude-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
         </form>
         <form id="messageType" class="messageType">
@@ -136,14 +145,10 @@
       <p id="skills"></p>
     </div>
   </div>
-  <div class="data-field">
-    <h3>Saved Profiles</h3>
-    <div id="savedProfiles" class="saved-profiles"></div>
-  </div>
   <div class="settings-section hidden" id="settings-section">
-    <h3>API Settings</h3>
+    <h3><i class="fa-solid fa-gear"></i> API Settings</h3>
     <div class="form-group">
-      <label for="apiKeyInput">Gemini API Key:</label>
+      <label for="apiKeyInput"><i class="fa-solid fa-key"></i> Gemini API Key:</label>
       <input 
         type="password" 
         id="apiKeyInput" 
@@ -152,6 +157,32 @@
       />
       <button id="saveApiKeyButton" class="btn btn-primary">Save API Key</button>
     </div>
+  </div>
+  <div id="connectionTypeSelect" class="connection-type-select hidden">
+    <h3><i class="fa-solid fa-users"></i> Select Connection Type</h3>
+    <form id="connectionTypeForm">
+      <label>
+        <input type="radio" name="connectionType" value="fellow-students" checked>
+        <i class="fa-solid fa-user-graduate"></i> Fellow Student
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="alumni">
+        <i class="fa-solid fa-graduation-cap"></i> Alumni
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="industry">
+        <i class="fa-solid fa-building"></i> Industry Professional
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="recruiters">
+        <i class="fa-solid fa-user-tie"></i> Recruiter
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="other">
+        <i class="fa-solid fa-users"></i> Other
+      </label>
+    </form>
+    <button id="saveWithConnectionType" class="scrapeButton"><i class="fa-solid fa-save"></i> Save Profile</button>
   </div>
   <script src="../storage.js"></script>
   <script type="module" src="popup.js"></script>

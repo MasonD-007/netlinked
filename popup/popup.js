@@ -7,18 +7,15 @@ function isLinkedInProfilePage(url) {
   return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url);
 }
 
-//document.getElementById('actionButton').addEventListener('click', () => {
-//  document.getElementById('buttonContainer').classList.add('hidden');
-//  document.getElementById('profileData').classList.remove('hidden');
-//});
-
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+  loadTheme();
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
-
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
+      showBackButton();
       document.getElementById('loadingPopup').classList.remove('hidden');
+      document.getElementById('connectionTypeSelect').classList.remove('hidden');
       
       try {
         // Wait for the scraping to complete using a Promise
@@ -36,11 +33,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         currentProfileData = scrapedData;
         console.log("Scraped profile data:", currentProfileData);
         
-        // Now that we have the data, save the profile
-        await saveProfile(currentProfileData);
+        // Show connection type selection
+        document.getElementById('buttonContainer').classList.add('hidden');
+        document.getElementById('connectionTypeSelect').classList.remove('hidden');
         
-        //reload the page
-        window.location.reload();
       } catch (error) {
         console.error(error);
         alert("Failed to save profile data");
@@ -51,6 +47,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
 
     //generate message button
     document.getElementById('generateMessageButton').onclick = async () => {
+      showBackButton();
       document.getElementById('messageType').classList.remove('hidden');
       document.getElementById('loadingPopup').classList.remove('hidden');
       
@@ -130,9 +127,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         document.getElementById('loadingPopup').classList.add('hidden');
       }
     };
-    document.getElementById('openWebsiteButton').onclick = () => {
+    document.getElementById('websiteButton').addEventListener('click', () => {
       chrome.tabs.create({ url: 'website/web.html' });
-    };
+    });
   } else {
     // User is not on a LinkedIn profile
     document.getElementById('saveProfileButton').onclick = () => {
@@ -147,9 +144,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       }
     }
 
-    document.getElementById('openWebsiteButton').onclick = () => {
+    document.getElementById('websiteButton').addEventListener('click', () => {
       chrome.tabs.create({ url: 'website/web.html' });
-    };
+    });
   }
 });
 
@@ -238,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const success = await saveProfile(currentProfileData);
     if (success) {
       alert('Profile saved successfully!');
-      await displaySavedProfiles();
+      //await displaySavedProfiles();
       document.getElementById('saveButton').classList.add('hidden');
       document.getElementById('profileData').classList.add('hidden');
       document.getElementById('buttonContainer').classList.remove('hidden');
@@ -249,11 +246,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Display saved profiles on popup open
-  await displaySavedProfiles();
+  //await displaySavedProfiles();
 });
 
 // Function to display saved profiles
-async function displaySavedProfiles() {
+/*async function displaySavedProfiles() {
   const profiles = await getProfiles();
   const container = document.getElementById('savedProfiles');
   
@@ -266,6 +263,7 @@ async function displaySavedProfiles() {
     <div class="profile-card" data-profile-id="${profile.savedAt}">
       <h4>${profile.name}</h4>
       <p>${profile.headline || ''}</p>
+      <span class="connection-type-badge ${profile.connectionType}">${profile.connectionType}</span>
       <div class="profile-actions">
         <button class="view-profile-btn">View</button>
         <button class="print-profile-btn">Print</button>
@@ -300,6 +298,7 @@ async function displaySavedProfiles() {
     }
   });
 }
+*/
 let apiKey = await getAIApiKey('gemini');
 console.log("API key:", apiKey);
 //if the api key is not set, hide the settings section 
@@ -324,4 +323,101 @@ document.getElementById('saveApiKeyButton').addEventListener('click', async () =
   } else {
     alert('Failed to save API key');
   }
+});
+
+// Update the API key check section
+let geminiKey = await getAIApiKey('gemini');
+let chatgptKey = await getAIApiKey('chatgpt');
+let claudeKey = await getAIApiKey('claude');
+
+// Show settings section if Gemini key is not set
+if (geminiKey == null) {
+  document.getElementById('settings-section').classList.remove('hidden');
+}
+
+// Handle all AI API radio buttons (both in buttonContainer and profileData)
+document.querySelectorAll('input[name="aiApi"]').forEach(radio => {
+  if (radio.value === 'chatgpt' && chatgptKey == null) {
+    radio.disabled = true;
+    document.querySelectorAll('#chatgpt-key-required').forEach(element => {
+      element.classList.remove('hidden');
+    });
+  }
+  
+  if (radio.value === 'claude' && claudeKey == null) {
+    radio.disabled = true;
+    document.querySelectorAll('#claude-key-required').forEach(element => {
+      element.classList.remove('hidden');
+    });
+  }
+});
+
+// Add this near the start of your popup.js
+function loadTheme() {
+    chrome.storage.local.get('theme', function(result) {
+        if (result.theme) {
+            const root = document.documentElement;
+            root.style.setProperty('--primary-color', result.theme);
+            
+            // Calculate darker shade for hover states
+            const darkerShade = adjustColor(result.theme, -20);
+            root.style.setProperty('--primary-color-dark', darkerShade);
+            
+            // Calculate lighter shade for backgrounds
+            root.style.setProperty('--primary-color-light', `${result.theme}1A`);
+        }
+    });
+}
+
+// Helper function to adjust color brightness (same as in web.js)
+function adjustColor(color, percent) {
+    const num = parseInt(color.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    
+    return "#" + (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+    ).toString(16).slice(1);
+}
+
+// Call loadTheme when the popup opens
+document.addEventListener('DOMContentLoaded', loadTheme);
+
+// Add connection type selection handler
+document.getElementById('saveWithConnectionType').onclick = async () => {
+  const connectionType = document.querySelector('input[name="connectionType"]:checked')?.value;
+  if (!connectionType) {
+    alert("Please select a connection type");
+    return;
+  }
+
+  try {
+    await saveProfile(currentProfileData, connectionType);
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save profile data");
+  }
+};
+
+// Add near the start of your file
+function showBackButton() {
+  document.getElementById('backButton').classList.remove('hidden');
+}
+
+function hideBackButton() {
+  document.getElementById('backButton').classList.add('hidden');
+}
+
+// Add after your DOMContentLoaded event listener
+document.getElementById('backButton').addEventListener('click', () => {
+  window.location.reload();
+  
+  // Hide the back button
+  hideBackButton();
 });

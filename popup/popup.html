@@ -14,18 +14,20 @@
       <button class="scrapeButton" id="generateMessageButton">Generate Message</button>
       <div id="messageOptions" class="messageOptions">
         <form id="aiApiSelect" class="aiApiSelect">
-          <h3>AI API</h3>
+          <h3>AI Provider</h3>
           <label>
             <input type="radio" name="aiApi" value="gemini" checked>
             Gemini
           </label>
           <label>
-            <input type="radio" name="aiApi" value="openai">
-            OpenAI
+            <input type="radio" name="aiApi" value="chatgpt">
+            ChatGPT
+            <span id="chatgpt-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
           <label>
-            <input type="radio" name="aiApi" value="anthropic">
-            Anthropic
+            <input type="radio" name="aiApi" value="claude">
+            Claude
+            <span id="claude-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
         </form>
         <form id="messageType" class="messageType">
@@ -74,12 +76,14 @@
             Gemini
           </label>
           <label>
-            <input type="radio" name="aiApi" value="openai">
-            OpenAI
+            <input type="radio" name="aiApi" value="chatgpt">
+            ChatGPT
+            <span id="chatgpt-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
           <label>
-            <input type="radio" name="aiApi" value="anthropic">
-            Anthropic
+            <input type="radio" name="aiApi" value="claude">
+            Claude
+            <span id="claude-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
           </label>
         </form>
         <form id="messageType" class="messageType">

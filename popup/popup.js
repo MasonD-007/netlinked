@@ -7,11 +7,6 @@ function isLinkedInProfilePage(url) {
   return /^https:\/\/(www\.)?linkedin\.com\/in\/[^\/]+\/?$/.test(url);
 }
 
-//document.getElementById('actionButton').addEventListener('click', () => {
-//  document.getElementById('buttonContainer').classList.add('hidden');
-//  document.getElementById('profileData').classList.remove('hidden');
-//});
-
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
@@ -323,5 +318,32 @@ document.getElementById('saveApiKeyButton').addEventListener('click', async () =
 
   } else {
     alert('Failed to save API key');
+  }
+});
+
+// Update the API key check section
+let geminiKey = await getAIApiKey('gemini');
+let chatgptKey = await getAIApiKey('chatgpt');
+let claudeKey = await getAIApiKey('claude');
+
+// Show settings section if Gemini key is not set
+if (geminiKey == null) {
+  document.getElementById('settings-section').classList.remove('hidden');
+}
+
+// Handle all AI API radio buttons (both in buttonContainer and profileData)
+document.querySelectorAll('input[name="aiApi"]').forEach(radio => {
+  if (radio.value === 'chatgpt' && chatgptKey == null) {
+    radio.disabled = true;
+    document.querySelectorAll('#chatgpt-key-required').forEach(element => {
+      element.classList.remove('hidden');
+    });
+  }
+  
+  if (radio.value === 'claude' && claudeKey == null) {
+    radio.disabled = true;
+    document.querySelectorAll('#claude-key-required').forEach(element => {
+      element.classList.remove('hidden');
+    });
   }
 });

@@ -192,7 +192,7 @@ async function decryptData(encrypted, key, iv) {
 }
 
 async function saveAIApiKey(AItype, apiKey) {
-  const aiList = ["gemini", "openai", "anthropic"];
+  const aiList = ["gemini", "chatgpt", "claude"];
   if (!aiList.includes(AItype)) {
     console.error("Invalid AI type");
     return false;
@@ -211,7 +211,7 @@ async function saveAIApiKey(AItype, apiKey) {
 }
 
 async function getAIApiKey(AItype) {
-  const aiList = ["gemini", "openai", "anthropic"];
+  const aiList = ["gemini", "chatgpt", "claude"];
   if (!aiList.includes(AItype)) {
     console.error("Invalid AI type");
     return null;

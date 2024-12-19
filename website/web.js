@@ -50,7 +50,10 @@ async function loadSettings() {
     const clientProfileSection = document.getElementById('clientProfileSection');
     
     clientProfileSection.innerHTML = `
-        <h2>Your LinkedIn Profile</h2>
+        <div class="client-profile-header">
+            <h2>Your LinkedIn Profile</h2>
+            <button id="refreshProfileBtn" class="secondary-button">Refresh Profile Data</button>
+        </div>
         <div class="client-profile-card">
             <div class="profile-header">
                 <div class="profile-info">
@@ -74,9 +77,14 @@ async function loadSettings() {
     document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
         const selectedApi = document.getElementById('aiApiSelect').value;
         const apiKey = document.getElementById('aiApiKey').value;
-        saveAIApiKey(selectedApi, apiKey);
-        document.getElementById('aiApiKey').value = '';
-        document.getElementById('aiApiSelect').value = 'gemini';
+        if (apiKey && apiKey.length > 0) {
+            saveAIApiKey(selectedApi, apiKey);
+            document.getElementById('aiApiKey').value = '';
+            document.getElementById('aiApiSelect').value = 'gemini';
+        } else {
+            console.error('Cannot save empty API key');
+            alert('Cannot save empty API key');
+        }
     });
 
     // open the clints profile on linkedin
@@ -116,6 +124,25 @@ async function loadSettings() {
         } catch (error) {
             console.error('Error fetching API keys:', error);
         }
+    });
+
+    // Add refresh profile event listener
+    document.getElementById('refreshProfileBtn').addEventListener('click', async () => {
+        chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+            chrome.runtime.sendMessage({ 
+                action: "OPEN_LINKEDIN",
+                tabId: tabs[0].id 
+            }, async (response) => {
+                if (response && response.success) {
+                    console.log("Profile scraped successfully");
+                    await saveClientProfile(response.profileData);
+                    loadSettings(); // Reload the settings section
+                } else {
+                    console.error("Failed to scrape profile");
+                    alert("Failed to update profile. Please make sure you're logged into LinkedIn.");
+                }
+            });
+        });
     });
 }
 

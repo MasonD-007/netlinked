@@ -294,6 +294,13 @@ body {
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.client-profile-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .client-profile-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
@@ -387,9 +394,7 @@ body {
 }
 
 .secondary-button:hover {
-    background-color: var(--primary-color-light);
-    border-color: var(--primary-color-dark);
-    color: var(--primary-color-dark);
+    background-color: var(--primary-color-dark);
 }
 
 .api-settings-container {

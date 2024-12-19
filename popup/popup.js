@@ -13,6 +13,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
+      showBackButton();
       document.getElementById('loadingPopup').classList.remove('hidden');
       document.getElementById('connectionTypeSelect').classList.remove('hidden');
       
@@ -46,6 +47,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
 
     //generate message button
     document.getElementById('generateMessageButton').onclick = async () => {
+      showBackButton();
       document.getElementById('messageType').classList.remove('hidden');
       document.getElementById('loadingPopup').classList.remove('hidden');
       
@@ -125,9 +127,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         document.getElementById('loadingPopup').classList.add('hidden');
       }
     };
-    document.getElementById('openWebsiteButton').onclick = () => {
+    document.getElementById('websiteButton').addEventListener('click', () => {
       chrome.tabs.create({ url: 'website/web.html' });
-    };
+    });
   } else {
     // User is not on a LinkedIn profile
     document.getElementById('saveProfileButton').onclick = () => {
@@ -142,9 +144,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
       }
     }
 
-    document.getElementById('openWebsiteButton').onclick = () => {
+    document.getElementById('websiteButton').addEventListener('click', () => {
       chrome.tabs.create({ url: 'website/web.html' });
-    };
+    });
   }
 });
 
@@ -233,7 +235,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const success = await saveProfile(currentProfileData);
     if (success) {
       alert('Profile saved successfully!');
-      await displaySavedProfiles();
+      //await displaySavedProfiles();
       document.getElementById('saveButton').classList.add('hidden');
       document.getElementById('profileData').classList.add('hidden');
       document.getElementById('buttonContainer').classList.remove('hidden');
@@ -244,11 +246,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Display saved profiles on popup open
-  await displaySavedProfiles();
+  //await displaySavedProfiles();
 });
 
 // Function to display saved profiles
-async function displaySavedProfiles() {
+/*async function displaySavedProfiles() {
   const profiles = await getProfiles();
   const container = document.getElementById('savedProfiles');
   
@@ -296,6 +298,7 @@ async function displaySavedProfiles() {
     }
   });
 }
+*/
 let apiKey = await getAIApiKey('gemini');
 console.log("API key:", apiKey);
 //if the api key is not set, hide the settings section 
@@ -401,3 +404,20 @@ document.getElementById('saveWithConnectionType').onclick = async () => {
     alert("Failed to save profile data");
   }
 };
+
+// Add near the start of your file
+function showBackButton() {
+  document.getElementById('backButton').classList.remove('hidden');
+}
+
+function hideBackButton() {
+  document.getElementById('backButton').classList.add('hidden');
+}
+
+// Add after your DOMContentLoaded event listener
+document.getElementById('backButton').addEventListener('click', () => {
+  window.location.reload();
+  
+  // Hide the back button
+  hideBackButton();
+});

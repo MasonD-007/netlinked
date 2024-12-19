@@ -543,3 +543,22 @@ body {
     color: var(--primary-color);
     width: 16px;
 }
+
+.messages-filters {
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    gap: 15px;
+}
+
+.filter-group .settings-select {
+    flex: 1;
+}

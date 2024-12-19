@@ -27,22 +27,71 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
 async function loadGeneratedMessage() {
     const messages = await getGeneratedMessage();
     const messagesSection = document.getElementById('MessagesSection');
-    messagesSection.innerHTML = messages.map(message => `
-        <div class="message-card">
-            <div class="message-header">
-                <div class="message-header-left">
-                    <h3>To: ${message.RecipientName}</h3>
-                    <p>Type: ${message.messageType}</p>
+    
+    // Get unique recipients and message types
+    const recipients = [...new Set(messages.map(m => m.RecipientName))];
+    const messageTypes = [...new Set(messages.map(m => m.messageType))];
+    
+    // Populate filter dropdowns
+    const recipientFilter = document.getElementById('recipientFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    
+    recipientFilter.innerHTML = `
+        <option value="">All Recipients</option>
+        ${recipients.map(recipient => `
+            <option value="${recipient}">${recipient}</option>
+        `).join('')}
+    `;
+    
+    typeFilter.innerHTML = `
+        <option value="">All Message Types</option>
+        ${messageTypes.map(type => `
+            <option value="${type}">${type}</option>
+        `).join('')}
+    `;
+    
+    // Function to filter and display messages
+    function filterAndDisplayMessages() {
+        const selectedRecipient = recipientFilter.value;
+        const selectedType = typeFilter.value;
+        
+        const filteredMessages = messages.filter(message => {
+            const recipientMatch = !selectedRecipient || message.RecipientName === selectedRecipient;
+            const typeMatch = !selectedType || message.messageType === selectedType;
+            return recipientMatch && typeMatch;
+        });
+        
+        // Display filtered messages
+        const messagesHTML = filteredMessages.map(message => `
+            <div class="message-card">
+                <div class="message-header">
+                    <div class="message-header-left">
+                        <h3>To: ${message.RecipientName}</h3>
+                        <p>Type: ${message.messageType}</p>
+                    </div>
+                    <div class="message-header-right">
+                        <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
+                    </div>
                 </div>
-                <div class="message-header-right">
-                    <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
+                <div class="message-body">
+                    <p>${message.message}</p>
                 </div>
             </div>
-            <div class="message-body">
-                <p>${message.message}</p>
-            </div>
-        </div>
-    `).join('');
+        `).join('');
+        
+        // Update the messages container
+        const messagesContainer = messagesSection.querySelector('.messages-container') || 
+            messagesSection.appendChild(document.createElement('div'));
+        messagesContainer.className = 'messages-container';
+        messagesContainer.innerHTML = messagesHTML || '<p>No messages found</p>';
+    }
+    
+    // Add event listeners to filters
+    recipientFilter.addEventListener('change', filterAndDisplayMessages);
+    typeFilter.addEventListener('change', filterAndDisplayMessages);
+    
+    // Initial display
+    filterAndDisplayMessages();
 }
 
 async function loadSettings() {

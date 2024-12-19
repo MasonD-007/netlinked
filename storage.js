@@ -2,7 +2,7 @@
 async function saveProfile(profileData, connectionType) {
   try {
     // Validate connection type
-    const validTypes = ['fellow-student', 'alumni', 'industry', 'recruiter', 'other'];
+    const validTypes = ['fellow-students', 'alumni', 'industry', 'recruiters', 'other'];
     if (!validTypes.includes(connectionType)) {
       console.error('Invalid connection type');
       return false;

@@ -15,6 +15,17 @@ async function saveProfile(profileData) {
   }
 }
 
+async function getSpecificProfile(savedAt) {
+  try {
+    const key = `profile_${new Date(savedAt).getTime()}`;
+    const result = await chrome.storage.local.get(key);
+    return result[key] || null;
+  } catch (error) {
+    console.error('Error getting specific profile:', error);
+    return null;
+  }
+}
+
 async function getProfiles() {
   try {
     const result = await chrome.storage.local.get(null);
@@ -49,7 +60,7 @@ async function getClientProfile() {
 }
 
 async function deleteProfile(savedAt) {
-  if (savedAt === 'clientProfile') {
+  if (savedAt === await getClientProfile().savedAt) {
     console.error("Cannot delete client profile");
     return false;
   }

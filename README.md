@@ -30,4 +30,3 @@ This is a tool that helps you connect with people on LinkedIn. It uses the Gemin
 2. Add your Gemini API key to `config.js`
 
 
-

@@ -231,11 +231,12 @@ function showWelcomeDialog() {
 
 async function openProfileUrl(timestamp) {
     const profile = await getSpecificProfile(timestamp);
-    if (profile && profile.url) {
-        chrome.tabs.create({ url: profile.url });
+    console.log("Requested profiles:", profile);
+    console.log("Requested profiles url:", profile.profileURL);
+    if (profile && profile.profileURL) {
+        chrome.tabs.create({ url: profile.profileURL });
     } else {
         console.error('Profile or URL not found for timestamp:', timestamp);
-        console.log(await getProfiles());
     }
 }
 

@@ -1,11 +1,14 @@
 // Storage helper functions
 async function saveProfile(profileData) {
   try {
+    // Ensure we have a consistent URL property
+    const profileUrl = profileData.profileUrl || profileData.linkedinUrl || profileData.profileURL || profileData.url || window.location.href;
+    
     await chrome.storage.local.set({
       [`profile_${Date.now()}`]: {
         ...profileData,
         savedAt: new Date().toISOString(),
-        linkedinUrl: profileData.profileUrl || window.location.href
+        profileURL: profileUrl // Store URL consistently as profileURL
       }
     });
     return true;
@@ -41,7 +44,16 @@ async function getProfiles() {
 
 async function saveClientProfile(profileData) {
   try {
-    await chrome.storage.local.set({ clientProfile: { ...profileData, savedAt: new Date().toISOString(), linkedinUrl: profileData.profileUrl || window.location.href } });
+    // Ensure we have a consistent URL property
+    const profileUrl = profileData.profileUrl || profileData.linkedinUrl || profileData.profileURL || profileData.url || window.location.href;
+    
+    await chrome.storage.local.set({ 
+      clientProfile: { 
+        ...profileData, 
+        savedAt: new Date().toISOString(), 
+        profileURL: profileUrl // Store URL consistently as profileURL
+      } 
+    });
     return true;
   } catch (error) {
     console.error('Error saving client profile:', error);
@@ -74,22 +86,27 @@ async function deleteProfile(savedAt) {
   }
 }
 
-async function openProfileUrl(savedAt) {
+/*async function openProfileUrl(savedAt) {
   try {
     const key = `profile_${new Date(savedAt).getTime()}`;
     const result = await chrome.storage.local.get(key);
     const profile = result[key];
     
-    if (profile?.profileURL) {
-      chrome.tabs.create({ url: profile.profileURL });
-      return true;
+    if (profile) {
+      // Check all possible URL property names
+      const url = profile.profileURL || profile.linkedinUrl || profile.profileUrl || profile.url;
+      if (url) {
+        chrome.tabs.create({ url: url });
+        return true;
+      }
     }
+    console.error('No URL found for profile:', profile);
     return false;
   } catch (error) {
     console.error('Error opening profile URL:', error);
     return false;
   }
-} 
+} */
 
 async function printProfile(savedAt) {
   try {
@@ -114,7 +131,7 @@ async function saveGeneratedMessage(message, RecipientData, messageType) {
     const newMessage = {
       message: message,
       RecipientName: RecipientData.name,
-      RecipientUrl: RecipientData.profileUrl,
+      RecipientUrl: RecipientData.profileURL,
       messageType: messageType,
       timestamp: new Date().toISOString()
     };

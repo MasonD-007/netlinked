@@ -562,3 +562,31 @@ body {
 .filter-group .settings-select {
     flex: 1;
 }
+
+.messages-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.empty-state {
+    text-align: center;
+    background-color: white;
+    padding: 40px 20px;
+}
+
+.empty-state h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
+
+.empty-state i {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.empty-state p {
+    color: #666;
+    font-size: 16px;
+    line-height: 1.5;
+}

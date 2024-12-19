@@ -61,29 +61,44 @@ async function loadGeneratedMessage() {
             return recipientMatch && typeMatch;
         });
         
-        // Display filtered messages
-        const messagesHTML = filteredMessages.map(message => `
-            <div class="message-card">
-                <div class="message-header">
-                    <div class="message-header-left">
-                        <h3>To: ${message.RecipientName}</h3>
-                        <p>Type: ${message.messageType}</p>
-                    </div>
-                    <div class="message-header-right">
-                        <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
-                    </div>
-                </div>
-                <div class="message-body">
-                    <p>${message.message}</p>
-                </div>
-            </div>
-        `).join('');
-        
-        // Update the messages container
+        // Create or get messages container
         const messagesContainer = messagesSection.querySelector('.messages-container') || 
             messagesSection.appendChild(document.createElement('div'));
         messagesContainer.className = 'messages-container';
-        messagesContainer.innerHTML = messagesHTML || '<p>No messages found</p>';
+        
+        if (filteredMessages.length === 0) {
+            // Show empty state message
+            messagesContainer.innerHTML = `
+                <div class="message-card empty-state">
+                    <div class="message-header">
+                        <div class="message-header-left">
+                            <h3><i class="fas fa-inbox"></i> No Messages</h3>
+                        </div>
+                    </div>
+                    <div class="message-body">
+                        <p>No generated messages found. Messages will appear here after you generate them from LinkedIn profiles.</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            // Display filtered messages
+            messagesContainer.innerHTML = filteredMessages.map(message => `
+                <div class="message-card">
+                    <div class="message-header">
+                        <div class="message-header-left">
+                            <h3>To: ${message.RecipientName}</h3>
+                            <p>Type: ${message.messageType}</p>
+                        </div>
+                        <div class="message-header-right">
+                            <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                    <div class="message-body">
+                        <p>${message.message}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
     }
     
     // Add event listeners to filters
@@ -202,7 +217,17 @@ async function loadProfiles() {
     const profilesContainer = document.querySelector('.profiles-container');
 
     if (profiles.length === 0) {
-        profilesContainer.innerHTML = '<p>No profiles saved yet</p>';
+        profilesContainer.innerHTML = `
+            <div class="message-card empty-state">
+                <div class="message-header">
+                    <div class="message-header-left">
+                        <h3><i class="fas fa-user-circle"></i> No Profiles</h3>
+                    </div>
+                </div>
+                <div class="message-body">
+                    <p>No profiles saved yet. Visit LinkedIn profiles and use the extension to save them here.</p>
+                </div>
+            </div>`;
         return;
     }
 

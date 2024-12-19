@@ -51,15 +51,17 @@ async function loadSettings() {
     
     clientProfileSection.innerHTML = `
         <div class="client-profile-header">
-            <h2>Your LinkedIn Profile</h2>
-            <button id="refreshProfileBtn" class="secondary-button">Refresh Profile Data</button>
+            <h2><i class="fas fa-user-circle"></i> Your LinkedIn Profile</h2>
+            <button id="refreshProfileBtn" class="secondary-button">
+                <i class="fas fa-sync-alt"></i> Refresh Profile Data
+            </button>
         </div>
         <div class="client-profile-card">
             <div class="profile-header">
                 <div class="profile-info">
                     <h3>${clientProfile.name || 'Unknown Name'}</h3>
-                    <p class="headline">${clientProfile.headline || 'No title'}</p>
-                    <p class="location">${clientProfile.location || 'No location'}</p>
+                    <p class="headline"><i class="fas fa-briefcase"></i> ${clientProfile.headline || 'No title'}</p>
+                    <p class="location"><i class="fas fa-map-marker-alt"></i> ${clientProfile.location || 'No location'}</p>
                 </div>
                 <div class="profile-meta">
                     <p class="timestamp">Last updated: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
@@ -155,30 +157,71 @@ async function loadProfiles() {
         return;
     }
 
-    profilesContainer.innerHTML = profiles.map(profile => `
-        <div class="client-profile-card">
-            <div class="profile-header">
-                <div class="profile-info">
-                    <h3>${profile.name || 'Unknown Name'}</h3>
-                    <p class="headline">${profile.headline || 'No title'}</p>
-                    <p class="location">${profile.location || 'No location'}</p>
-                </div>
-                <div class="profile-meta">
-                    <p class="timestamp">Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
-                    <div class="profile-actions">
-                        <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">View on LinkedIn</button>
-                        <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">Delete</button>
-                    </div>
-                </div>
+    // Group profiles by connection type
+    const groupedProfiles = profiles.reduce((acc, profile) => {
+        const type = profile.connectionType || 'other';
+        if (!acc[type]) acc[type] = [];
+        acc[type].push(profile);
+        return acc;
+    }, {});
+
+    // Create HTML for each group
+    const groupsHTML = Object.entries(groupedProfiles).map(([type, profiles]) => `
+        <div class="profile-group">
+            <div class="profile-group-header" data-type="${type}">
+                <h2>
+                    <i class="fas ${getConnectionTypeIcon(type)}"></i>
+                    ${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')}
+                    <span class="profile-count">(${profiles.length})</span>
+                </h2>
+                <i class="fas fa-chevron-down toggle-icon"></i>
             </div>
-            <div class="profile-about">
-                <h4>About</h4>
-                <p>${profile.about || 'No about section available'}</p>
+            <div class="profile-group-content" id="group-${type}">
+                ${profiles.map(profile => `
+                    <div class="client-profile-card">
+                        <div class="profile-header">
+                            <div class="profile-info">
+                                <h3><i class="fas fa-user"></i> ${profile.name || 'Unknown Name'}</h3>
+                                <p class="headline"><i class="fas fa-briefcase"></i> ${profile.headline || 'No title'}</p>
+                                <p class="location"><i class="fas fa-map-marker-alt"></i> ${profile.location || 'No location'}</p>
+                            </div>
+                            <div class="profile-meta">
+                                <p class="timestamp"><i class="far fa-clock"></i> Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
+                                <div class="profile-actions">
+                                    <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">
+                                        <i class="fas fa-external-link-alt"></i> View on LinkedIn
+                                    </button>
+                                    <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="profile-about">
+                            <h4>About</h4>
+                            <p>${profile.about || 'No about section available'}</p>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         </div>
     `).join('');
 
-    // Add event listeners
+    profilesContainer.innerHTML = groupsHTML;
+
+    // Add event listeners for group toggles
+    document.querySelectorAll('.profile-group-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            
+            content.classList.toggle('collapsed');
+            icon.classList.toggle('fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        });
+    });
+
+    // Add event listeners for profile actions
     document.querySelectorAll('.open-profile-btn').forEach(button => {
         button.addEventListener('click', () => {
             try {
@@ -191,7 +234,6 @@ async function loadProfiles() {
 
     document.querySelectorAll('.delete-profile-btn').forEach(button => {
         button.addEventListener('click', () => {
-            console.log("Deleting profile:", button.getAttribute('data-timestamp'));
             try {
                 deleteProfile(button.getAttribute('data-timestamp'));
                 window.location.reload();
@@ -318,4 +360,15 @@ function adjustColor(color, percent) {
         (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
         (B < 255 ? (B < 1 ? 0 : B) : 255)
     ).toString(16).slice(1);
+}
+
+function getConnectionTypeIcon(type) {
+    const iconMap = {
+        'first': 'fa-user-friends',
+        'second': 'fa-users',
+        'third': 'fa-user-plus',
+        'recruiter': 'fa-headhunter',
+        'other': 'fa-user-circle'
+    };
+    return iconMap[type] || 'fa-user';
 }

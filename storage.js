@@ -1,6 +1,13 @@
 // Storage helper functions
-async function saveProfile(profileData) {
+async function saveProfile(profileData, connectionType) {
   try {
+    // Validate connection type
+    const validTypes = ['fellow-student', 'alumni', 'industry', 'recruiter', 'other'];
+    if (!validTypes.includes(connectionType)) {
+      console.error('Invalid connection type');
+      return false;
+    }
+
     // Ensure we have a consistent URL property
     const profileUrl = profileData.profileUrl || profileData.linkedinUrl || profileData.profileURL || profileData.url || window.location.href;
     
@@ -8,7 +15,8 @@ async function saveProfile(profileData) {
       [`profile_${Date.now()}`]: {
         ...profileData,
         savedAt: new Date().toISOString(),
-        profileURL: profileUrl // Store URL consistently as profileURL
+        profileURL: profileUrl,
+        connectionType: connectionType // Add connection type to stored data
       }
     });
     return true;

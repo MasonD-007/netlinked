@@ -31,4 +31,10 @@ This is a tool that helps you connect with people on LinkedIn. It uses the Gemin
 
 ## TODO
 - create catagories for the saved messages and profiles
+    - possible categories:
+        - Fellow students
+        - Alumni
+        - Industry connections
+        - Recruiters
 - somehow keep the given gemini secret key secure
+- create the templates for the generated messages

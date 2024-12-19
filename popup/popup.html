@@ -157,6 +157,32 @@
       <button id="saveApiKeyButton" class="btn btn-primary">Save API Key</button>
     </div>
   </div>
+  <div id="connectionTypeSelect" class="connection-type-select hidden">
+    <h3>Select Connection Type</h3>
+    <form id="connectionTypeForm">
+      <label>
+        <input type="radio" name="connectionType" value="fellow-student" checked>
+        Fellow Student
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="alumni">
+        Alumni
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="industry">
+        Industry Professional
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="recruiter">
+        Recruiter
+      </label>
+      <label>
+        <input type="radio" name="connectionType" value="other">
+        Other
+      </label>
+    </form>
+    <button id="saveWithConnectionType" class="scrapeButton">Save Profile</button>
+  </div>
   <script src="../storage.js"></script>
   <script type="module" src="popup.js"></script>
 </body>

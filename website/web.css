@@ -452,3 +452,94 @@ body {
     margin-left: 5px;
     color: #2ECC71;
 }
+
+.profile-group {
+    margin-bottom: 20px;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 60px;
+}
+
+.profile-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: var(--primary-color-light);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    height: 60px;
+    box-sizing: border-box;
+}
+
+.profile-group-header:hover {
+    background-color: var(--primary-color-light);
+}
+
+.profile-group-header h2 {
+    margin: 0;
+    font-size: 1.2em;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-count {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.toggle-icon {
+    color: var(--primary-color);
+    transition: transform 0.2s;
+}
+
+.profile-group-content {
+    transition: all 0.3s ease-out;
+    overflow: hidden;
+    padding: 0 15px;
+}
+
+.profile-group-content.collapsed {
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.client-profile-card {
+    margin: 15px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.client-profile-card:first-child {
+    margin-top: 15px;
+}
+
+.client-profile-card:last-child {
+    margin-bottom: 15px;
+}
+
+.fas, .far {
+    margin-right: 8px;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.profile-group-header:hover .toggle-icon {
+    opacity: 0.8;
+}
+
+.profile-actions .fas {
+    margin-right: 4px;
+}
+
+.profile-info .fas {
+    color: var(--primary-color);
+    width: 16px;
+}

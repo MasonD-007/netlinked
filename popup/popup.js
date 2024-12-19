@@ -14,6 +14,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
       document.getElementById('loadingPopup').classList.remove('hidden');
+      document.getElementById('connectionTypeSelect').classList.remove('hidden');
       
       try {
         // Wait for the scraping to complete using a Promise
@@ -31,11 +32,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         currentProfileData = scrapedData;
         console.log("Scraped profile data:", currentProfileData);
         
-        // Now that we have the data, save the profile
-        await saveProfile(currentProfileData);
+        // Show connection type selection
+        document.getElementById('buttonContainer').classList.add('hidden');
+        document.getElementById('connectionTypeSelect').classList.remove('hidden');
         
-        //reload the page
-        window.location.reload();
       } catch (error) {
         console.error(error);
         alert("Failed to save profile data");
@@ -261,6 +261,7 @@ async function displaySavedProfiles() {
     <div class="profile-card" data-profile-id="${profile.savedAt}">
       <h4>${profile.name}</h4>
       <p>${profile.headline || ''}</p>
+      <span class="connection-type-badge ${profile.connectionType}">${profile.connectionType}</span>
       <div class="profile-actions">
         <button class="view-profile-btn">View</button>
         <button class="print-profile-btn">Print</button>
@@ -383,3 +384,20 @@ function adjustColor(color, percent) {
 
 // Call loadTheme when the popup opens
 document.addEventListener('DOMContentLoaded', loadTheme);
+
+// Add connection type selection handler
+document.getElementById('saveWithConnectionType').onclick = async () => {
+  const connectionType = document.querySelector('input[name="connectionType"]:checked')?.value;
+  if (!connectionType) {
+    alert("Please select a connection type");
+    return;
+  }
+
+  try {
+    await saveProfile(currentProfileData, connectionType);
+    window.location.reload();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to save profile data");
+  }
+};

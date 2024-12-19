@@ -213,3 +213,25 @@ input[type="radio"] {
   border-radius: 4px;
   cursor: pointer;
 }
+.connection-type-select {
+  padding: 15px;
+  margin-top: 10px;
+}
+
+.connection-type-select label {
+  display: block;
+  margin: 10px 0;
+}
+
+.connection-type-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.connection-type-badge.fellow-student { background-color: #e3f2fd; color: #1565c0; }
+.connection-type-badge.alumni { background-color: #f3e5f5; color: #7b1fa2; }
+.connection-type-badge.industry { background-color: #e8f5e9; color: #2e7d32; }
+.connection-type-badge.recruiter { background-color: #fff3e0; color: #ef6c00; }

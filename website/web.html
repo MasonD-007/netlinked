@@ -41,20 +41,32 @@
           <div id="SettingsSection" class="content-section hidden">
             <div class="settings-container">
               <h1>Settings</h1>
+              <div class="settings-section" id="clientProfileSection">
+                <!-- Client profile will be inserted here by JavaScript -->
+              </div>
               <div class="settings-section">
                 <h3>AI API Selection</h3>
                 <div class="select-wrapper">
                   <select id="aiApiSelect" class="settings-select">
-                    <option value="openai">OpenAI GPT</option>
-                    <option value="anthropic">Anthropic Claude</option>
-                    <option value="gemini">Google Gemini</option>
+                    <option value="chatgpt">ChatGPT</option>
+                    <option value="claude">Claude</option>
+                    <option value="gemini">Gemini</option>
                   </select>
                   <input type="text" id="aiApiKey" placeholder="Enter API Key">
                   <button id="saveApiKeyBtn">Save</button>
                 </div>
               </div>
-              <div class="settings-section" id="clientProfileSection">
-                <!-- Client profile will be inserted here by JavaScript -->
+              <div class="settings-section">
+                <h3>Theme Settings</h3>
+                <div class="select-wrapper">
+                  <select id="themeSelect" class="settings-select">
+                    <option value="#0077b5">LinkedIn Blue</option>
+                    <option value="#2ECC71">Green</option>
+                    <option value="#E74C3C">Red</option>
+                    <option value="#9B59B6">Purple</option>
+                    <option value="#34495E">Dark Blue</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>

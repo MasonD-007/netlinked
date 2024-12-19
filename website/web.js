@@ -1,4 +1,5 @@
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+    loadTheme();
     setActive('Profiles');
     loadProfiles();
 
@@ -49,21 +50,23 @@ async function loadSettings() {
     const clientProfileSection = document.getElementById('clientProfileSection');
     
     clientProfileSection.innerHTML = `
-        <h3>Client Profile</h3>
-        <div class="top-row">
-            <h3>${clientProfile.name || 'Unknown Name'}</h3>
-            <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
-            <div class="profile-actions">
-                <button class="open-profile-btn" data-timestamp="${clientProfile.savedAt}">Open Profile</button>
+        <h2>Your LinkedIn Profile</h2>
+        <div class="client-profile-card">
+            <div class="profile-header">
+                <div class="profile-info">
+                    <h3>${clientProfile.name || 'Unknown Name'}</h3>
+                    <p class="headline">${clientProfile.headline || 'No title'}</p>
+                    <p class="location">${clientProfile.location || 'No location'}</p>
+                </div>
+                <div class="profile-meta">
+                    <p class="timestamp">Last updated: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
+                    <button class="open-profile-btn primary-button" data-timestamp="${clientProfile.savedAt}">View on LinkedIn</button>
+                </div>
             </div>
-        </div>
-        <div class="bottom-row">
-            <h3>Title</h3>
-            <p>${clientProfile.headline || 'No title'}</p>
-            <h3>Location</h3>
-            <p>${clientProfile.location || 'No location'}</p>
-            <h3>About</h3>
-            <p>${clientProfile.about || 'No about'}</p>
+            <div class="profile-about">
+                <h4>About</h4>
+                <p>${clientProfile.about || 'No about section available'}</p>
+            </div>
         </div>
     `;
 
@@ -88,6 +91,22 @@ async function loadSettings() {
     document.querySelector('#clientProfileSection .open-profile-btn').addEventListener('click', (e) => {
         openProfileUrl(e.target.getAttribute('data-timestamp'));
     });
+
+    // Add event listener for theme selection
+    document.getElementById('themeSelect').addEventListener('change', function(e) {
+        const color = e.target.value;
+        changeTheme(color);
+        // Save the selected theme
+        chrome.storage.local.set({ 'theme': color });
+    });
+
+    // Load saved theme
+    chrome.storage.local.get('theme', function(result) {
+        if (result.theme) {
+            document.getElementById('themeSelect').value = result.theme;
+            changeTheme(result.theme);
+        }
+    });
 }
 
 async function loadProfiles() {
@@ -100,22 +119,24 @@ async function loadProfiles() {
     }
 
     profilesContainer.innerHTML = profiles.map(profile => `
-        <div class="profile-card">
-            <div class="top-row">
-                <h3>${profile.name || 'Unknown Name'}</h3>
-                <p>Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
+        <div class="client-profile-card">
+            <div class="profile-header">
+                <div class="profile-info">
+                    <h3>${profile.name || 'Unknown Name'}</h3>
+                    <p class="headline">${profile.headline || 'No title'}</p>
+                    <p class="location">${profile.location || 'No location'}</p>
+                </div>
+                <div class="profile-meta">
+                    <p class="timestamp">Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
+                    <div class="profile-actions">
+                        <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">View on LinkedIn</button>
+                        <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">Delete</button>
+                    </div>
+                </div>
             </div>
-            <div class="bottom-row">
-                <h3>Title</h3>
-                <p>${profile.headline || 'No title'}</p>
-                <h3>Location</h3>
-                <p>${profile.location || 'No location'}</p>
-                <h3>About</h3>
-                <p>${profile.about || 'No about'}</p>
-            </div>
-            <div class="profile-actions">
-                <button class="open-profile-btn" data-timestamp="${profile.savedAt}">Open Profile</button>
-                <button class="delete-profile-btn" data-timestamp="${profile.savedAt}">Delete</button>
+            <div class="profile-about">
+                <h4>About</h4>
+                <p>${profile.about || 'No about section available'}</p>
             </div>
         </div>
     `).join('');
@@ -223,4 +244,40 @@ function showSection(sectionId) {
         section.classList.add('hidden');
     });
     document.getElementById(sectionId).classList.remove('hidden');
+}
+
+function loadTheme() {
+    chrome.storage.local.get('theme', function(result) {
+        if (result.theme) {
+            changeTheme(result.theme);
+        }
+    });
+}
+
+function changeTheme(primaryColor) {
+    const root = document.documentElement;
+    root.style.setProperty('--primary-color', primaryColor);
+    
+    // Calculate darker shade for hover states
+    const darkerShade = adjustColor(primaryColor, -20);
+    root.style.setProperty('--primary-color-dark', darkerShade);
+    
+    // Calculate lighter shade for backgrounds
+    root.style.setProperty('--primary-color-light', `${primaryColor}1A`); // 10% opacity
+}
+
+// Helper function to adjust color brightness
+function adjustColor(color, percent) {
+    const num = parseInt(color.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    
+    return "#" + (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+    ).toString(16).slice(1);
 }

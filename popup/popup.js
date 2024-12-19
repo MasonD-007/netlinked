@@ -9,8 +9,8 @@ function isLinkedInProfilePage(url) {
 
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+  loadTheme();
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
-
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
       document.getElementById('loadingPopup').classList.remove('hidden');
@@ -347,3 +347,39 @@ document.querySelectorAll('input[name="aiApi"]').forEach(radio => {
     });
   }
 });
+
+// Add this near the start of your popup.js
+function loadTheme() {
+    chrome.storage.local.get('theme', function(result) {
+        if (result.theme) {
+            const root = document.documentElement;
+            root.style.setProperty('--primary-color', result.theme);
+            
+            // Calculate darker shade for hover states
+            const darkerShade = adjustColor(result.theme, -20);
+            root.style.setProperty('--primary-color-dark', darkerShade);
+            
+            // Calculate lighter shade for backgrounds
+            root.style.setProperty('--primary-color-light', `${result.theme}1A`);
+        }
+    });
+}
+
+// Helper function to adjust color brightness (same as in web.js)
+function adjustColor(color, percent) {
+    const num = parseInt(color.replace("#", ""), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    
+    return "#" + (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+    ).toString(16).slice(1);
+}
+
+// Call loadTheme when the popup opens
+document.addEventListener('DOMContentLoaded', loadTheme);

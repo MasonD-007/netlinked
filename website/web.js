@@ -54,7 +54,7 @@ async function loadSettings() {
             <h3>${clientProfile.name || 'Unknown Name'}</h3>
             <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
             <div class="profile-actions">
-                <button class="open-profile-btn" id="open-profile-btn" onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
+                <button class="open-profile-btn" data-timestamp="${clientProfile.savedAt}">Open Profile</button>
             </div>
         </div>
         <div class="bottom-row">
@@ -71,7 +71,7 @@ async function loadSettings() {
     document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
         const selectedApi = document.getElementById('aiApiSelect').value;
         const apiKey = document.getElementById('aiApiKey').value;
-        saveAIApiKey(selectedApi, apiKey);
+        //saveAIApiKey(selectedApi, apiKey);
     });
 
     // Add event listener for the select
@@ -80,8 +80,13 @@ async function loadSettings() {
         const selectedApi = e.target.value;
         console.log('Selected API:', selectedApi);
         // You can add your logic here to save the selection or perform other actions
-        const apiKey = document.getElementById('aiApiKey').value;
-        saveAIApiKey(selectedApi, apiKey);
+        //const apiKey = document.getElementById('aiApiKey').value;
+        //saveAIApiKey(selectedApi, apiKey);
+    });
+
+    // Add event listener for the open profile button
+    document.querySelector('#clientProfileSection .open-profile-btn').addEventListener('click', (e) => {
+        openProfileUrl(e.target.getAttribute('data-timestamp'));
     });
 }
 
@@ -116,7 +121,25 @@ async function loadProfiles() {
     `).join('');
 
     // Add event listeners
-    addProfileEventListeners();
+    document.querySelectorAll('.open-profile-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            try {
+                openProfileUrl(button.getAttribute('data-timestamp'));
+            } catch (error) {
+                console.error('Error opening profile:', error);
+            }
+        });
+    });
+
+    document.querySelectorAll('.delete-profile-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            try {
+                deleteProfile(button.getAttribute('data-timestamp'));
+            } catch (error) {
+                console.error('Error deleting profile:', error);
+            }
+        });
+    });
 }
 
 function setActive(buttonid) {
@@ -186,10 +209,12 @@ function showWelcomeDialog() {
 }
 
 async function openProfileUrl(timestamp) {
-    const profiles = await getProfiles();
-    const profile = profiles.find(p => p.savedAt === timestamp);
+    const profile = await getSpecificProfile(timestamp);
     if (profile && profile.url) {
         chrome.tabs.create({ url: profile.url });
+    } else {
+        console.error('Profile or URL not found for timestamp:', timestamp);
+        console.log(await getProfiles());
     }
 }
 

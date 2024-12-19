@@ -3,39 +3,30 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
     loadProfiles();
 
     document.getElementById('Profiles').addEventListener('click', () => {
-        document.getElementById('mainContent').classList.remove('hidden');
         setActive('Profiles');
-        console.log("switched to profiles");
-        document.getElementById('mainContentHeader').innerHTML = '';
+        showSection('ProfilesSection');
         loadProfiles();
     });
     document.getElementById('Jobs').addEventListener('click', () => {
-        document.getElementById('mainContent').classList.remove('hidden');
         setActive('Jobs');
-        console.log("switched to jobs");
-        document.getElementById('mainContentHeader').innerHTML = '<h1>IN DEVELOPMENT</h1>';
+        showSection('JobsSection');
     });
     document.getElementById('Messages').addEventListener('click', () => {
-        document.getElementById('mainContent').classList.remove('hidden');
         setActive('Messages');
-        console.log("switched to messages");
-        document.getElementById('mainContentHeader').innerHTML = '';
+        showSection('MessagesSection');
         loadGeneratedMessage();
     });
     document.getElementById('Settings').addEventListener('click', () => {
-        document.getElementById('mainContent').classList.remove('hidden');
         setActive('Settings');
-        console.log("switched to settings");
-        document.getElementById('mainContentHeader').innerHTML = '';
+        showSection('SettingsSection');
         loadSettings();
     });
 });
 
-async function loadGeneratedMessage() { //Done
-    document.getElementById('mainContentHeader').textContent = "HELLO WORLD OF MESSAGES";
+async function loadGeneratedMessage() {
     const messages = await getGeneratedMessage();
-    console.log("Messages:", messages);
-    document.getElementById('mainContentHeader').innerHTML = messages.map(message => `
+    const messagesSection = document.getElementById('MessagesSection');
+    messagesSection.innerHTML = messages.map(message => `
         <div class="message-card">
             <div class="message-header">
                 <div class="message-header-left">
@@ -55,43 +46,26 @@ async function loadGeneratedMessage() { //Done
 
 async function loadSettings() {
     const clientProfile = await getClientProfile();
+    const clientProfileSection = document.getElementById('clientProfileSection');
     
-    let settingshtml = `
-    <div class="settings-container">
-        <h1>Settings</h1>
-        <div class="settings-section">
-            <h3>AI API Selection</h3>
-            <div class="select-wrapper">
-                <select id="aiApiSelect" class="settings-select">
-                    <option value="openai">OpenAI GPT</option>
-                    <option value="anthropic">Anthropic Claude</option>
-                    <option value="gemini">Google Gemini</option>
-                </select>
-                <input type="text" id="aiApiKey" placeholder="Enter API Key">
-                <button id="saveApiKeyBtn">Save</button>
+    clientProfileSection.innerHTML = `
+        <h3>Client Profile</h3>
+        <div class="top-row">
+            <h3>${clientProfile.name || 'Unknown Name'}</h3>
+            <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
+            <div class="profile-actions">
+                <button class="open-profile-btn" id="open-profile-btn" onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
             </div>
         </div>
-        <div class="settings-section">
-            <h3>Client Profile</h3>
-                <div class="top-row">
-                    <h3>${clientProfile.name || 'Unknown Name'}</h3>
-                    <p>Saved: ${new Date(clientProfile.savedAt).toLocaleDateString()}</p>
-                    <div class="profile-actions">
-                        <button class="open-profile-btn" id="open-profile-btn" onclick="openProfileUrl(${clientProfile.savedAt})">Open Profile</button>
-                    </div>
-                </div>
-                <div class="bottom-row">
-                    <h3>Title</h3>
-                    <p>${clientProfile.headline || 'No title'}</p>
-                    <h3>Location</h3>
-                    <p>${clientProfile.location || 'No location'}</p>
-                    <h3>About</h3>
-                <p>${clientProfile.about || 'No about'}</p>
-            </div>
+        <div class="bottom-row">
+            <h3>Title</h3>
+            <p>${clientProfile.headline || 'No title'}</p>
+            <h3>Location</h3>
+            <p>${clientProfile.location || 'No location'}</p>
+            <h3>About</h3>
+            <p>${clientProfile.about || 'No about'}</p>
         </div>
-    </div>
     `;
-    document.getElementById('mainContentHeader').innerHTML = settingshtml;
 
     // Add event listeners
     document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
@@ -113,55 +87,36 @@ async function loadSettings() {
 
 async function loadProfiles() {
     const profiles = await getProfiles();
-    const mainContent = document.getElementById('mainContentHeader');
-
-    let profilesHTML = '<div class="profiles-container">';
+    const profilesContainer = document.querySelector('.profiles-container');
 
     if (profiles.length === 0) {
-        mainContent.innerHTML = '<p>No profiles saved yet</p>';
+        profilesContainer.innerHTML = '<p>No profiles saved yet</p>';
         return;
-    } else {
-        profiles.forEach(profile => {
-            profilesHTML += `
-                <div class="profile-card">
-                    <div class="top-row">
-                        <h3>${profile.name || 'Unknown Name'}</h3>
-                        <p>Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
-                    </div>
-                    <div class="bottom-row">
-                        <h3>Title</h3>
-                        <p>${profile.headline || 'No title'}</p>
-                        <h3>Location</h3>
-                        <p>${profile.location || 'No location'}</p>
-                        <h3>About</h3>
-                        <p>${profile.about || 'No about'}</p>
-                    </div>
-                    <div class="profile-actions">
-                        <button class="open-profile-btn" data-timestamp="${profile.savedAt}">Open Profile</button>
-                        <button class="delete-profile-btn" data-timestamp="${profile.savedAt}">Delete</button>
-                    </div>
-                </div>
-            `;
-        });
     }
-    profilesHTML += '</div>';
-    
-    mainContent.innerHTML = profilesHTML;
 
-    // Add event listeners after adding the HTML
-    document.querySelectorAll('.open-profile-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const timestamp = this.getAttribute('data-timestamp');
-            openProfileUrl(timestamp);
-        });
-    });
+    profilesContainer.innerHTML = profiles.map(profile => `
+        <div class="profile-card">
+            <div class="top-row">
+                <h3>${profile.name || 'Unknown Name'}</h3>
+                <p>Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
+            </div>
+            <div class="bottom-row">
+                <h3>Title</h3>
+                <p>${profile.headline || 'No title'}</p>
+                <h3>Location</h3>
+                <p>${profile.location || 'No location'}</p>
+                <h3>About</h3>
+                <p>${profile.about || 'No about'}</p>
+            </div>
+            <div class="profile-actions">
+                <button class="open-profile-btn" data-timestamp="${profile.savedAt}">Open Profile</button>
+                <button class="delete-profile-btn" data-timestamp="${profile.savedAt}">Delete</button>
+            </div>
+        </div>
+    `).join('');
 
-    document.querySelectorAll('.delete-profile-btn').forEach(button => {
-        button.addEventListener('click', function() {
-            const timestamp = this.getAttribute('data-timestamp');
-            deleteProfile(timestamp).then(loadProfiles);
-        });
-    });
+    // Add event listeners
+    addProfileEventListeners();
 }
 
 function setActive(buttonid) {
@@ -236,4 +191,11 @@ async function openProfileUrl(timestamp) {
     if (profile && profile.url) {
         chrome.tabs.create({ url: profile.url });
     }
+}
+
+function showSection(sectionId) {
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    document.getElementById(sectionId).classList.remove('hidden');
 }

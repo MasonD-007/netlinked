@@ -251,3 +251,11 @@ body {
     margin-top: 0;
     color: #0077b5;
 }
+
+.hidden {
+    display: none !important;
+}
+
+.content-section {
+    width: 100%;
+}

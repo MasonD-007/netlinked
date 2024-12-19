@@ -8,22 +8,60 @@
   <body>
     <div id="webContainer">
       <div id="sideBar">
-      <div id="sideBarContent">
-        <h1>Netlinked</h1>
-        <nav class="sidebar-nav">
-          <button class="nav-button active" data-section="Profiles" id="Profiles">Profiles</button>
-          <button class="nav-button" data-section="Jobs" id="Jobs">Jobs (Coming Soon)</button>
-          <button class="nav-button" data-section="Messages" id="Messages">Messages</button>
-          <button class="nav-button" data-section="Settings" id="Settings">Settings</button>
-        </nav>
+        <div id="sideBarContent">
+          <h1>Netlinked</h1>
+          <nav class="sidebar-nav">
+            <button class="nav-button active" data-section="Profiles" id="Profiles">Profiles</button>
+            <button class="nav-button" data-section="Jobs" id="Jobs">Jobs (Coming Soon)</button>
+            <button class="nav-button" data-section="Messages" id="Messages">Messages</button>
+            <button class="nav-button" data-section="Settings" id="Settings">Settings</button>
+          </nav>
+        </div>
+      </div>
+      <div id="mainContent">
+        <div id="mainContentHeader">
+          <!-- Profiles Section -->
+          <div id="ProfilesSection" class="content-section">
+            <div class="profiles-container">
+              <!-- Profile cards will be inserted here by JavaScript -->
+            </div>
+          </div>
+
+          <!-- Jobs Section -->
+          <div id="JobsSection" class="content-section hidden">
+            <h1>IN DEVELOPMENT</h1>
+          </div>
+
+          <!-- Messages Section -->
+          <div id="MessagesSection" class="content-section hidden">
+            <!-- Message cards will be inserted here by JavaScript -->
+          </div>
+
+          <!-- Settings Section -->
+          <div id="SettingsSection" class="content-section hidden">
+            <div class="settings-container">
+              <h1>Settings</h1>
+              <div class="settings-section">
+                <h3>AI API Selection</h3>
+                <div class="select-wrapper">
+                  <select id="aiApiSelect" class="settings-select">
+                    <option value="openai">OpenAI GPT</option>
+                    <option value="anthropic">Anthropic Claude</option>
+                    <option value="gemini">Google Gemini</option>
+                  </select>
+                  <input type="text" id="aiApiKey" placeholder="Enter API Key">
+                  <button id="saveApiKeyBtn">Save</button>
+                </div>
+              </div>
+              <div class="settings-section" id="clientProfileSection">
+                <!-- Client profile will be inserted here by JavaScript -->
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="mainContent">
-      <div id="mainContentHeader">
-      </div>
-    </div>
-  </div>
-</body>
-<script src="../storage.js"></script>
-<script src="web.js"></script>
+  </body>
+  <script src="../storage.js"></script>
+  <script src="web.js"></script>
 </html>

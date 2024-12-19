@@ -15,22 +15,6 @@ function isLinkedInProfilePage(url) {
 // Get the current tab and check if it's a LinkedIn profile
 chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
-    // User is on a LinkedIn profile
-    /*document.getElementById('actionButton').onclick = () => {
-      // Show loading popup
-      document.getElementById('loadingPopup').classList.remove('hidden');
-      
-      //Call the background script to scrape the profile
-      chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
-        if (response.success) {
-          displayProfileData(response.profileData);
-          currentProfileData = response.profileData;
-          document.getElementById('loadingPopup').classList.add('hidden');
-        } else {
-          alert("Failed to scrape profile data");
-        }
-      });
-    };*/
 
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
@@ -55,6 +39,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         // Now that we have the data, save the profile
         await saveProfile(currentProfileData);
         
+        //reload the page
+        window.location.reload();
       } catch (error) {
         console.error(error);
         alert("Failed to save profile data");
@@ -256,6 +242,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('saveButton').classList.add('hidden');
       document.getElementById('profileData').classList.add('hidden');
       document.getElementById('buttonContainer').classList.remove('hidden');
+      document.getElementById('savedProfiles').classList.remove('hidden');
     } else {
       alert('Failed to save profile');
     }

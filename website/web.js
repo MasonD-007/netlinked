@@ -35,7 +35,7 @@ async function loadGeneratedMessage() {
                     <p>Type: ${message.messageType}</p>
                 </div>
                 <div class="message-header-right">
-                    <p>Sent: ${new Date(message.timestamp).toLocaleDateString()}</p>
+                    <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
                 </div>
             </div>
             <div class="message-body">
@@ -74,22 +74,15 @@ async function loadSettings() {
     document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
         const selectedApi = document.getElementById('aiApiSelect').value;
         const apiKey = document.getElementById('aiApiKey').value;
-        //saveAIApiKey(selectedApi, apiKey);
+        saveAIApiKey(selectedApi, apiKey);
+        document.getElementById('aiApiKey').value = '';
+        document.getElementById('aiApiSelect').value = 'gemini';
     });
 
-    // Add event listener for the select
-    document.getElementById('aiApiSelect').addEventListener('change', function(e) {
-        // Handle the API selection change
-        const selectedApi = e.target.value;
-        console.log('Selected API:', selectedApi);
-        // You can add your logic here to save the selection or perform other actions
-        //const apiKey = document.getElementById('aiApiKey').value;
-        //saveAIApiKey(selectedApi, apiKey);
-    });
-
-    // Add event listener for the open profile button
+    // open the clints profile on linkedin
     document.querySelector('#clientProfileSection .open-profile-btn').addEventListener('click', (e) => {
-        openProfileUrl(e.target.getAttribute('data-timestamp'));
+        console.log("Opening client profile on LinkedIn");
+        chrome.tabs.create({ url: "https://www.linkedin.com/in/me/" });
     });
 
     // Add event listener for theme selection
@@ -105,6 +98,23 @@ async function loadSettings() {
         if (result.theme) {
             document.getElementById('themeSelect').value = result.theme;
             changeTheme(result.theme);
+        }
+    });
+
+    // Add this event listener
+    document.getElementById('testApiKeysBtn').addEventListener('click', async () => {
+        try {
+            const geminiKey = await getAIApiKey('gemini');
+            const chatgptKey = await getAIApiKey('chatgpt');
+            const claudeKey = await getAIApiKey('claude');
+
+            console.log('Saved API Keys:', {
+                'Gemini': geminiKey || 'Not set',
+                'ChatGPT': chatgptKey || 'Not set',
+                'Claude': claudeKey || 'Not set'
+            });
+        } catch (error) {
+            console.error('Error fetching API keys:', error);
         }
     });
 }
@@ -154,8 +164,10 @@ async function loadProfiles() {
 
     document.querySelectorAll('.delete-profile-btn').forEach(button => {
         button.addEventListener('click', () => {
+            console.log("Deleting profile:", button.getAttribute('data-timestamp'));
             try {
                 deleteProfile(button.getAttribute('data-timestamp'));
+                window.location.reload();
             } catch (error) {
                 console.error('Error deleting profile:', error);
             }
@@ -172,7 +184,7 @@ function setActive(buttonid) {
     });
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message) => {
     if (message.type === "SHOW_WELCOME_MESSAGE") {
         showWelcomeDialog();
     }
@@ -231,8 +243,6 @@ function showWelcomeDialog() {
 
 async function openProfileUrl(timestamp) {
     const profile = await getSpecificProfile(timestamp);
-    console.log("Requested profiles:", profile);
-    console.log("Requested profiles url:", profile.profileURL);
     if (profile && profile.profileURL) {
         chrome.tabs.create({ url: profile.profileURL });
     } else {

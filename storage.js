@@ -86,28 +86,6 @@ async function deleteProfile(savedAt) {
   }
 }
 
-/*async function openProfileUrl(savedAt) {
-  try {
-    const key = `profile_${new Date(savedAt).getTime()}`;
-    const result = await chrome.storage.local.get(key);
-    const profile = result[key];
-    
-    if (profile) {
-      // Check all possible URL property names
-      const url = profile.profileURL || profile.linkedinUrl || profile.profileUrl || profile.url;
-      if (url) {
-        chrome.tabs.create({ url: url });
-        return true;
-      }
-    }
-    console.error('No URL found for profile:', profile);
-    return false;
-  } catch (error) {
-    console.error('Error opening profile URL:', error);
-    return false;
-  }
-} */
-
 async function printProfile(savedAt) {
   try {
     const key = `profile_${new Date(savedAt).getTime()}`;
@@ -151,7 +129,6 @@ async function saveGeneratedMessage(message, RecipientData, messageType) {
 async function getGeneratedMessage() {
   try {
     const result = await chrome.storage.local.get('generatedMessages');
-    console.log(result);
     return result.generatedMessages || [];
   } catch (error) {
     console.error('Error getting generated messages:', error);

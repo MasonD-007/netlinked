@@ -45,15 +45,18 @@
                 <!-- Client profile will be inserted here by JavaScript -->
               </div>
               <div class="settings-section">
-                <h3>AI API Selection</h3>
-                <div class="select-wrapper">
-                  <select id="aiApiSelect" class="settings-select">
-                    <option value="chatgpt">ChatGPT</option>
-                    <option value="claude">Claude</option>
-                    <option value="gemini">Gemini</option>
-                  </select>
-                  <input type="text" id="aiApiKey" placeholder="Enter API Key">
-                  <button id="saveApiKeyBtn">Save</button>
+                <h3>AI API Settings</h3>
+                <div class="api-settings-container">
+                    <div class="api-input-group">
+                        <select id="aiApiSelect" class="settings-select">
+                            <option value="gemini">Gemini</option>
+                            <option value="chatgpt">ChatGPT (Coming Soon)</option>
+                            <option value="claude">Claude (Coming Soon)</option>
+                        </select>
+                        <input type="text" id="aiApiKey" placeholder="Enter API Key">
+                        <button id="saveApiKeyBtn">Save</button>
+                    </div>
+                    <button id="testApiKeysBtn" class="secondary-button">Test Saved API Keys</button>
                 </div>
               </div>
               <div class="settings-section">

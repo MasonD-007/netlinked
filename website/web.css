@@ -391,3 +391,59 @@ body {
     border-color: var(--primary-color-dark);
     color: var(--primary-color-dark);
 }
+
+.api-settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.api-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.api-input-group select {
+    flex: 1;
+    max-width: 150px;
+}
+
+.api-input-group input {
+    flex: 2;
+    padding: 10px 15px;
+    border: 2px solid #e1e1e1;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.api-input-group input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.api-input-group button {
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.api-input-group button:hover {
+    background-color: var(--primary-color-dark);
+}
+
+.api-input-group select option {
+    display: flex;
+    align-items: center;
+}
+
+.api-key-status {
+    display: inline-block;
+    margin-left: 5px;
+    color: #2ECC71;
+}

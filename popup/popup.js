@@ -13,8 +13,28 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
+      //check if the profile is already saved
+      try {
+        const existingProfiles = await getProfiles();
+        console.log("Existing profiles URL: ");
+        for (let i = 0; i < existingProfiles.length; i++) {
+          console.log(existingProfiles[i].profileURL);
+        }
+        const isDuplicate = existingProfiles.some(profile => 
+          profile.profileURL === tabs[0].url
+        );
+        if (isDuplicate) {
+          alert("This profile has already been saved!");
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking for duplicate profile:", error);
+        alert("Error checking for duplicate profile");
+        return;
+      }
       showBackButton();
       document.getElementById('loadingPopup').classList.remove('hidden');
+      document.getElementById('buttonContainer').classList.add('hidden');
       document.getElementById('connectionTypeSelect').classList.remove('hidden');
       
       try {
@@ -34,7 +54,6 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         console.log("Scraped profile data:", currentProfileData);
         
         // Show connection type selection
-        document.getElementById('buttonContainer').classList.add('hidden');
         document.getElementById('connectionTypeSelect').classList.remove('hidden');
         
       } catch (error) {
@@ -226,29 +245,6 @@ function displayProfileData(data) {
   document.getElementById('saveButton').classList.remove('hidden');
 }
 
-// Add event listeners for storage operations
-document.addEventListener('DOMContentLoaded', async () => {
-  // Add save button listener
-  document.getElementById('saveButton').addEventListener('click', async () => {
-    if (!currentProfileData) return;
-    
-    const success = await saveProfile(currentProfileData);
-    if (success) {
-      alert('Profile saved successfully!');
-      //await displaySavedProfiles();
-      document.getElementById('saveButton').classList.add('hidden');
-      document.getElementById('profileData').classList.add('hidden');
-      document.getElementById('buttonContainer').classList.remove('hidden');
-      document.getElementById('savedProfiles').classList.remove('hidden');
-    } else {
-      alert('Failed to save profile');
-    }
-  });
-
-  // Display saved profiles on popup open
-  //await displaySavedProfiles();
-});
-
 // Function to display saved profiles
 /*async function displaySavedProfiles() {
   const profiles = await getProfiles();
@@ -397,8 +393,12 @@ document.getElementById('saveWithConnectionType').onclick = async () => {
   }
 
   try {
-    await saveProfile(currentProfileData, connectionType);
-    window.location.reload();
+    const result = await saveProfile(currentProfileData, connectionType);
+    if (result.success) {
+      window.location.reload();
+    } else {
+      alert("Failed to save profile data");
+    }
   } catch (error) {
     console.error(error);
     alert("Failed to save profile data");

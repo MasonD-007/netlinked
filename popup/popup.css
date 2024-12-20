@@ -240,7 +240,8 @@ input[type="radio"] {
 .nav-bar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: row;
+
   margin-bottom: 16px;
   padding: 0 4px;
   position: relative;
@@ -248,10 +249,7 @@ input[type="radio"] {
 
 /* Position the website button absolutely in the right corner */
 #websiteButton {
-  position: absolute;
-  right: 4px;
-  top: 100%;
-  transform: translateY(-50%);
+  margin-left: auto;
 }
 
 /* Ensure back button stays on the left */

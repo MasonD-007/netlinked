@@ -143,7 +143,7 @@ async function loadSettings() {
     document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
         const selectedApi = document.getElementById('aiApiSelect').value;
         const apiKey = document.getElementById('aiApiKey').value;
-        if (apiKey && apiKey.length > 0) {
+        if (apiKey.length > 0) {
             saveAIApiKey(selectedApi, apiKey);
             document.getElementById('aiApiKey').value = '';
             document.getElementById('aiApiSelect').value = 'gemini';

@@ -8,9 +8,21 @@ async function saveProfile(profileData, connectionType) {
       return false;
     }
 
-    // Ensure we have a consistent URL property
+    // Get the profile URL consistently
     const profileUrl = profileData.profileUrl || profileData.linkedinUrl || profileData.profileURL || profileData.url || window.location.href;
+
+    // Check if profile already exists
+    const existingProfiles = await getProfiles();
+    const isDuplicate = existingProfiles.some(profile => 
+      profile.profileURL === profileUrl
+    );
+
+    if (isDuplicate) {
+      console.log('Profile already exists');
+      return { success: false, reason: 'duplicate' };
+    }
     
+    // Save the new profile
     await chrome.storage.local.set({
       [`profile_${Date.now()}`]: {
         ...profileData,
@@ -19,10 +31,10 @@ async function saveProfile(profileData, connectionType) {
         connectionType: connectionType // Add connection type to stored data
       }
     });
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error saving profile:', error);
-    return false;
+    return { success: false, reason: 'error' };
   }
 }
 

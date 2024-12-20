@@ -81,23 +81,52 @@ async function loadGeneratedMessage() {
                 </div>
             `;
         } else {
-            // Display filtered messages
-            messagesContainer.innerHTML = filteredMessages.map(message => `
-                <div class="message-card">
-                    <div class="message-header">
-                        <div class="message-header-left">
-                            <h3>To: ${message.RecipientName}</h3>
-                            <p>Type: ${message.messageType}</p>
-                        </div>
-                        <div class="message-header-right">
-                            <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
-                        </div>
+            // Group messages by recipient
+            const messagesByRecipient = filteredMessages.reduce((acc, message) => {
+                if (!acc[message.RecipientName]) {
+                    acc[message.RecipientName] = [];
+                }
+                acc[message.RecipientName].push(message);
+                return acc;
+            }, {});
+
+            // Display messages grouped by recipient
+            messagesContainer.innerHTML = Object.entries(messagesByRecipient).map(([recipient, messages]) => `
+                <div class="message-group">
+                    <div class="message-group-header">
+                        <h3>${recipient}</h3>
+                        <button class="delete-all-btn secondary-button" data-recipient="${recipient}">
+                            <i class="fas fa-trash-alt"></i> Delete All Messages
+                        </button>
                     </div>
-                    <div class="message-body">
-                        <p>${message.message}</p>
-                    </div>
+                    ${messages.map(message => `
+                        <div class="message-card">
+                            <div class="message-header">
+                                <div class="message-header-left">
+                                    <p>Type: ${message.messageType}</p>
+                                </div>
+                                <div class="message-header-right">
+                                    <p>Generated: ${new Date(message.timestamp).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            <div class="message-body">
+                                <p>${message.message}</p>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             `).join('');
+
+            // Add event listeners for delete all buttons
+            document.querySelectorAll('.delete-all-btn').forEach(button => {
+                button.addEventListener('click', async () => {
+                    const recipient = button.getAttribute('data-recipient');
+                    if (confirm(`Are you sure you want to delete all messages for ${recipient}?`)) {
+                        await deleteGeneratedMessage(recipient);
+                        loadGeneratedMessage(); // Reload messages
+                    }
+                });
+            });
         }
     }
     
@@ -216,106 +245,128 @@ async function loadProfiles() {
     const profiles = await getProfiles();
     const profilesContainer = document.querySelector('.profiles-container');
 
-    if (profiles.length === 0) {
-        profilesContainer.innerHTML = `
-            <div class="message-card empty-state">
-                <div class="message-header">
-                    <div class="message-header-left">
-                        <h3><i class="fas fa-user-circle"></i> No Profiles</h3>
-                    </div>
-                </div>
-                <div class="message-body">
-                    <p>No profiles saved yet. Visit LinkedIn profiles and use the extension to save them here.</p>
-                </div>
-            </div>`;
-        return;
+    // Function to filter profiles
+    function filterProfiles(searchTerm) {
+        const normalizedSearch = searchTerm.toLowerCase();
+        return profiles.filter(profile => 
+            profile.name.toLowerCase().includes(normalizedSearch)
+        );
     }
 
-    // Group profiles by connection type
-    const groupedProfiles = profiles.reduce((acc, profile) => {
-        const type = profile.connectionType || 'other';
-        if (!acc[type]) acc[type] = [];
-        acc[type].push(profile);
-        return acc;
-    }, {});
-
-    // Create HTML for each group
-    const groupsHTML = Object.entries(groupedProfiles).map(([type, profiles]) => `
-        <div class="profile-group">
-            <div class="profile-group-header" data-type="${type}">
-                <h2>
-                    <i class="fas ${getConnectionTypeIcon(type)}"></i>
-                    ${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')}
-                    <span class="profile-count">(${profiles.length})</span>
-                </h2>
-                <i class="fas fa-chevron-down toggle-icon"></i>
-            </div>
-            <div class="profile-group-content" id="group-${type}">
-                ${profiles.map(profile => `
-                    <div class="client-profile-card">
-                        <div class="profile-header">
-                            <div class="profile-info">
-                                <h3><i class="fas fa-user"></i> ${profile.name || 'Unknown Name'}</h3>
-                                <p class="headline"><i class="fas fa-briefcase"></i> ${profile.headline || 'No title'}</p>
-                                <p class="location"><i class="fas fa-map-marker-alt"></i> ${profile.location || 'No location'}</p>
-                            </div>
-                            <div class="profile-meta">
-                                <p class="timestamp"><i class="far fa-clock"></i> Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
-                                <div class="profile-actions">
-                                    <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">
-                                        <i class="fas fa-external-link-alt"></i> View on LinkedIn
-                                    </button>
-                                    <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">
-                                        <i class="fas fa-trash-alt"></i> Delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="profile-about">
-                            <h4>About</h4>
-                            <p>${profile.about || 'No about section available'}</p>
+    // Function to render profiles
+    function renderProfiles(filteredProfiles) {
+        if (filteredProfiles.length === 0) {
+            profilesContainer.innerHTML = `
+                <div class="message-card empty-state">
+                    <div class="message-header">
+                        <div class="message-header-left">
+                            <h3><i class="fas fa-user-circle"></i> No Matching Profiles</h3>
                         </div>
                     </div>
-                `).join('')}
+                    <div class="message-body">
+                        <p>No profiles match your search criteria.</p>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        // Group profiles by connection type
+        const groupedProfiles = filteredProfiles.reduce((acc, profile) => {
+            const type = profile.connectionType || 'other';
+            if (!acc[type]) acc[type] = [];
+            acc[type].push(profile);
+            return acc;
+        }, {});
+
+        // Create HTML for each group
+        const groupsHTML = Object.entries(groupedProfiles).map(([type, profiles]) => `
+            <div class="profile-group">
+                <div class="profile-group-header" data-type="${type}">
+                    <h2>
+                        <i class="fas ${getConnectionTypeIcon(type)}"></i>
+                        ${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')}
+                        <span class="profile-count">(${profiles.length})</span>
+                    </h2>
+                    <i class="fas fa-chevron-down toggle-icon"></i>
+                </div>
+                <div class="profile-group-content" id="group-${type}">
+                    ${profiles.map(profile => `
+                        <div class="client-profile-card">
+                            <div class="profile-header">
+                                <div class="profile-info">
+                                    <h3><i class="fas fa-user"></i> ${profile.name || 'Unknown Name'}</h3>
+                                    <p class="headline"><i class="fas fa-briefcase"></i> ${profile.headline || 'No title'}</p>
+                                    <p class="location"><i class="fas fa-map-marker-alt"></i> ${profile.location || 'No location'}</p>
+                                </div>
+                                <div class="profile-meta">
+                                    <p class="timestamp"><i class="far fa-clock"></i> Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
+                                    <div class="profile-actions">
+                                        <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">
+                                            <i class="fas fa-external-link-alt"></i> View on LinkedIn
+                                        </button>
+                                        <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="profile-about">
+                                <h4>About</h4>
+                                <p>${profile.about || 'No about section available'}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
 
-    profilesContainer.innerHTML = groupsHTML;
+        profilesContainer.innerHTML = groupsHTML;
 
-    // Add event listeners for group toggles
-    document.querySelectorAll('.profile-group-header').forEach(header => {
-        header.addEventListener('click', () => {
-            const content = header.nextElementSibling;
-            const icon = header.querySelector('.toggle-icon');
-            
-            content.classList.toggle('collapsed');
-            icon.classList.toggle('fa-chevron-down');
-            icon.classList.toggle('fa-chevron-up');
+        // Add event listeners for group toggles
+        document.querySelectorAll('.profile-group-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.toggle-icon');
+                
+                content.classList.toggle('collapsed');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+            });
         });
+
+        // Add event listeners for profile actions
+        document.querySelectorAll('.open-profile-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                try {
+                    openProfileUrl(button.getAttribute('data-timestamp'));
+                } catch (error) {
+                    console.error('Error opening profile:', error);
+                }
+            });
+        });
+
+        document.querySelectorAll('.delete-profile-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                try {
+                    deleteProfile(button.getAttribute('data-timestamp'));
+                    window.location.reload();
+                } catch (error) {
+                    console.error('Error deleting profile:', error);
+                }
+            });
+        });
+    }
+
+    // Add search input event listener
+    const searchInput = document.getElementById('profileSearchInput');
+    searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value;
+        const filteredProfiles = filterProfiles(searchTerm);
+        renderProfiles(filteredProfiles);
     });
 
-    // Add event listeners for profile actions
-    document.querySelectorAll('.open-profile-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            try {
-                openProfileUrl(button.getAttribute('data-timestamp'));
-            } catch (error) {
-                console.error('Error opening profile:', error);
-            }
-        });
-    });
-
-    document.querySelectorAll('.delete-profile-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            try {
-                deleteProfile(button.getAttribute('data-timestamp'));
-                window.location.reload();
-            } catch (error) {
-                console.error('Error deleting profile:', error);
-            }
-        });
-    });
+    // Initial render
+    renderProfiles(profiles);
 }
 
 function setActive(buttonid) {

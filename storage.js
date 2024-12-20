@@ -156,6 +156,18 @@ async function getGeneratedMessage() {
   }
 }
 
+async function deleteGeneratedMessage(RecipientName) {
+  try {
+    const existingMessages = await getGeneratedMessage();
+    const updatedMessages = existingMessages.filter(message => message.RecipientName !== RecipientName);
+    await chrome.storage.local.set({ generatedMessages: updatedMessages });
+    return true;
+  } catch (error) {
+    console.error('Error deleting generated message:', error);
+    return false;
+  }
+}
+
 async function encryptData(data) {
   const encoder = new TextEncoder();
   const dataBuffer = encoder.encode(data);

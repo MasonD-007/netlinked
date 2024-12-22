@@ -8,30 +8,22 @@ function isLinkedInProfilePage(url) {
 }
 
 // Get the current tab and check if it's a LinkedIn profile
-chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
+chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
   loadTheme();
   if (tabs[0] && isLinkedInProfilePage(tabs[0].url)) {
+    // Check if profile is already saved
+    const savedProfile = await isProfileSaved(tabs[0].url);
+    if (savedProfile) {
+      currentProfileData = savedProfile;
+    }
+
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
-      //check if the profile is already saved
-      try {
-        const existingProfiles = await getProfiles();
-        console.log("Existing profiles URL: ");
-        for (let i = 0; i < existingProfiles.length; i++) {
-          console.log(existingProfiles[i].profileURL);
-        }
-        const isDuplicate = existingProfiles.some(profile => 
-          profile.profileURL === tabs[0].url
-        );
-        if (isDuplicate) {
-          alert("This profile has already been saved!");
-          return;
-        }
-      } catch (error) {
-        console.error("Error checking for duplicate profile:", error);
-        alert("Error checking for duplicate profile");
+      if (savedProfile) {
+        alert("This profile has already been saved!");
         return;
       }
+
       showBackButton();
       document.getElementById('loadingPopup').classList.remove('hidden');
       document.getElementById('buttonContainer').classList.add('hidden');
@@ -102,18 +94,22 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
           return;
         }
 
-        //if we don't have the recipient data, scrape it
+        //if we don't have the recipient data, check if saved first, then scrape if needed
         if (!currentProfileData) {
-          //second scrape the current profile data
-          currentProfileData = await new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
-              if (response.success) {
-                resolve(response.profileData);
-              } else {
-                reject(new Error("Failed to scrape profile"));
-              }
+          const savedProfile = await isProfileSaved(tabs[0].url);
+          if (savedProfile) {
+            currentProfileData = savedProfile;
+          } else {
+            currentProfileData = await new Promise((resolve, reject) => {
+              chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+                if (response.success) {
+                  resolve(response.profileData);
+                } else {
+                  reject(new Error("Failed to scrape profile"));
+                }
+              });
             });
-          });
+          }
         }
 
         //Hide the message type select

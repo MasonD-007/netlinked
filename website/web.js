@@ -301,12 +301,19 @@ async function loadProfiles() {
                                 <div class="profile-meta">
                                     <p class="timestamp"><i class="far fa-clock"></i> Saved: ${new Date(profile.savedAt).toLocaleDateString()}</p>
                                     <div class="profile-actions">
-                                        <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">
-                                            <i class="fas fa-external-link-alt"></i> View on LinkedIn
-                                        </button>
-                                        <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">
-                                            <i class="fas fa-trash-alt"></i> Delete
-                                        </button>
+                                        <div class="profile-actions-top">
+                                            <button class="update-profile-btn primary-button" data-timestamp="${profile.savedAt}">
+                                                <i class="fas fa-sync-alt"></i> Update
+                                            </button>
+                                            <button class="open-profile-btn primary-button" data-timestamp="${profile.savedAt}">
+                                                <i class="fas fa-external-link-alt"></i> View on LinkedIn
+                                            </button>
+                                        </div>
+                                        <div class="profile-actions-bottom">
+                                            <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">
+                                                <i class="fas fa-trash-alt"></i> Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -352,6 +359,39 @@ async function loadProfiles() {
                     window.location.reload();
                 } catch (error) {
                     console.error('Error deleting profile:', error);
+                }
+            });
+        });
+
+        // Add event listener for update button
+        document.querySelectorAll('.update-profile-btn').forEach(button => {
+            button.addEventListener('click', async () => {
+                const timestamp = button.getAttribute('data-timestamp');
+                const profile = await getSpecificProfile(timestamp);
+                
+                if (profile && profile.profileURL) {
+                    // Show loading state
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                    button.disabled = true;
+
+                    // Send message to background script to scrape profile
+                    chrome.runtime.sendMessage({ 
+                        action: "UPDATE_PROFILE",
+                        profileUrl: profile.profileURL,
+                        timestamp: timestamp
+                    }, async (response) => {
+                        if (response && response.success) {
+                            // Update the profile with new data while preserving timestamp and URL
+                            await updateProfile(timestamp, response.profileData);
+                            loadProfiles(); // Reload all profiles
+                        } else {
+                            console.error("Failed to update profile");
+                            alert("Failed to update profile. Please make sure you're logged into LinkedIn.");
+                            // Reset button state
+                            button.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+                            button.disabled = false;
+                        }
+                    });
                 }
             });
         });

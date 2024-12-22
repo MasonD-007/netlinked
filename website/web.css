@@ -115,8 +115,22 @@ body {
 
 .profile-actions {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   margin-top: 15px;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.profile-actions-top {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-actions-bottom {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 .profile-actions button {
@@ -189,7 +203,7 @@ body {
 
 .select-wrapper input:focus {
     outline: none;
-    border-color: #005582;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(0,119,181,0.2);
 }
 
@@ -197,7 +211,7 @@ body {
     width: 100%;
     padding: 10px 15px;
     font-size: 16px;
-    border: 2px solid #0077b5;
+    border: 2px solid var(--primary-color);
     border-radius: 4px;
     background-color: white;
     cursor: pointer;
@@ -209,7 +223,7 @@ body {
 .select-wrapper::after {
     content: '>';
     font-size: 12px;
-    color: #0077b5;
+    color: var(--primary-color);
     position: absolute;
     right: 15px;
     top: 50%;
@@ -218,12 +232,12 @@ body {
 }
 
 .settings-select:hover {
-    border-color: #005582;
+    border-color: var(--primary-color-dark);
 }
 
 .settings-select:focus {
     outline: none;
-    border-color: #005582;
+    border-color: var(--primary-color-dark);
     box-shadow: 0 0 0 2px rgba(0,119,181,0.2);
 }
 

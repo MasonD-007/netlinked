@@ -62,6 +62,39 @@ async function getProfiles() {
   }
 }
 
+async function updateProfile(savedAt, updatedData) {
+  try {
+    const key = `profile_${new Date(savedAt).getTime()}`;
+    const result = await chrome.storage.local.get(key);
+    const existingProfile = result[key];
+    
+    if (!existingProfile) {
+      console.error('Profile not found');
+      return false;
+    }
+
+    // Merge existing profile with updated data, maintaining the original savedAt and profileURL
+    const updatedProfile = {
+      ...existingProfile,
+      ...updatedData,
+      savedAt: existingProfile.savedAt, // Keep original savedAt
+      profileURL: existingProfile.profileURL // Keep original profileURL
+    };
+
+    await chrome.storage.local.set({ [key]: updatedProfile });
+    return true;
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    return false;
+  }
+}
+
+async function isProfileSaved(profileUrl) {
+  const profiles = await getProfiles();
+  const savedProfile = profiles.find(profile => profile.profileURL === profileUrl);
+  return savedProfile || null;
+}
+
 async function saveClientProfile(profileData) {
   try {
     // Ensure we have a consistent URL property

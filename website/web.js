@@ -17,6 +17,11 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         showSection('MessagesSection');
         loadGeneratedMessage();
     });
+    document.getElementById('Templates').addEventListener('click', () => {
+        setActive('Templates');
+        showSection('TemplatesSection');
+        loadTemplates();
+    });
     document.getElementById('Settings').addEventListener('click', () => {
         setActive('Settings');
         showSection('SettingsSection');
@@ -431,31 +436,12 @@ chrome.runtime.onMessage.addListener((message) => {
 
 function showWelcomeDialog() {
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-        max-width: 400px;
-        text-align: center;
-    `;
+    dialog.className = 'welcome-dialog';
     
     dialog.innerHTML = `
-        <h2 style="color: #0077b5; margin-bottom: 15px;">Welcome to NetLinked!</h2>
-        <p style="margin-bottom: 20px;">To get started, we need to collect your LinkedIn profile data. Please make sure you're logged into LinkedIn.</p>
-        <button id="welcomeButton" style="
-            background: #0077b5;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-        ">Got it!</button>
+        <h2>Welcome to NetLinked!</h2>
+        <p>To get started, we need to collect your LinkedIn profile data. Please make sure you're logged into LinkedIn.</p>
+        <button id="welcomeButton" class="welcome-button">Got it!</button>
     `;
 
     document.body.appendChild(dialog);
@@ -494,6 +480,7 @@ function showSection(sectionId) {
         section.classList.add('hidden');
     });
     document.getElementById(sectionId).classList.remove('hidden');
+    updateNewTemplateButton(sectionId);
 }
 
 function loadTheme() {
@@ -541,4 +528,215 @@ function getConnectionTypeIcon(type) {
         'other': 'fa-user-circle'
     };
     return iconMap[type] || 'fa-user';
+}
+
+async function loadTemplates() {
+    const templates = await getTemplates();
+    const templatesContainer = document.querySelector('.templates-container');
+    
+    // Function to filter templates
+    function filterTemplates(typeFilter, lengthFilter) {
+        return templates.filter(template => {
+            const typeMatch = !typeFilter || template.type === typeFilter;
+            const lengthMatch = !lengthFilter || template.length === lengthFilter;
+            return typeMatch && lengthMatch;
+        });
+    }
+
+    // Function to render templates
+    function renderTemplates(filteredTemplates) {
+        if (filteredTemplates.length === 0) {
+            templatesContainer.innerHTML = `
+                <div class="message-card empty-state">
+                    <div class="message-header">
+                        <div class="message-header-left">
+                            <h3><i class="fas fa-file-alt"></i> No Templates</h3>
+                        </div>
+                    </div>
+                    <div class="message-body">
+                        <p>No message templates found. Add templates to quickly send personalized messages on LinkedIn.</p>
+                    </div>
+                </div>`;
+            return;
+        }
+
+        templatesContainer.innerHTML = filteredTemplates.map(template => `
+            <div class="template-card" data-id="${template.id}">
+                <div class="template-header">
+                    <div class="template-info">
+                        <h3>${template.name}</h3>
+                        <div class="template-meta">
+                            <span><i class="fas fa-tag"></i> ${template.type}</span>
+                            <span><i class="fas fa-ruler"></i> ${template.length}</span>
+                            <span><i class="fas fa-clock"></i> Created ${new Date(template.createdAt).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="template-content">
+                    ${template.content}
+                </div>
+                <div class="template-actions">
+                    <button class="edit-template-btn secondary-button" data-id="${template.id}">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="delete-template-btn secondary-button" data-id="${template.id}">
+                        <i class="fas fa-trash-alt"></i> Delete
+                    </button>
+                    <button class="use-template-btn primary-button" data-id="${template.id}">
+                        <i class="fas fa-paper-plane"></i> Use Template
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Add event listeners for template actions
+        document.querySelectorAll('.delete-template-btn').forEach(button => {
+            button.addEventListener('click', async () => {
+                const templateId = button.getAttribute('data-id');
+                if (confirm('Are you sure you want to delete this template?')) {
+                    await deleteTemplate(templateId);
+                    loadTemplates();
+                }
+            });
+        });
+
+        document.querySelectorAll('.edit-template-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const templateId = button.getAttribute('data-id');
+                const template = filteredTemplates.find(t => t.id === templateId);
+                if (template) {
+                    showTemplateEditDialog(template);
+                }
+            });
+        });
+
+        document.querySelectorAll('.use-template-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const templateId = button.getAttribute('data-id');
+                const template = filteredTemplates.find(t => t.id === templateId);
+                if (template) {
+                    // Copy template content to clipboard
+                    navigator.clipboard.writeText(template.content).then(() => {
+                        alert('Template copied to clipboard!');
+                    });
+                }
+            });
+        });
+    }
+
+    // Get unique template types for filter
+    const templateTypes = [...new Set(templates.map(t => t.type))];
+    const typeFilter = document.getElementById('templateTypeFilter');
+    typeFilter.innerHTML = `
+        <option value="">All Template Types</option>
+        ${templateTypes.map(type => `
+            <option value="${type}">${type}</option>
+        `).join('')}
+    `;
+
+    // Add filter event listeners
+    const lengthFilter = document.getElementById('templateLengthFilter');
+    typeFilter.addEventListener('change', () => {
+        const filteredTemplates = filterTemplates(typeFilter.value, lengthFilter.value);
+        renderTemplates(filteredTemplates);
+    });
+    lengthFilter.addEventListener('change', () => {
+        const filteredTemplates = filterTemplates(typeFilter.value, lengthFilter.value);
+        renderTemplates(filteredTemplates);
+    });
+
+    // Initial render
+    renderTemplates(templates);
+}
+
+function showTemplateEditDialog(template = null) {
+    const dialog = document.createElement('div');
+    dialog.className = 'template-dialog';
+    
+    dialog.innerHTML = `
+        <h2>${template ? 'Edit Template' : 'New Template'}</h2>
+        <div class="template-dialog-field">
+            <label>Name</label>
+            <input type="text" id="templateName" value="${template?.name || ''}">
+        </div>
+        <div class="template-dialog-field">
+            <label>Type</label>
+            <input type="text" id="templateType" value="${template?.type || ''}" placeholder="e.g., Connection Request, Follow-up, etc.">
+        </div>
+        <div class="template-dialog-field">
+            <label>Length</label>
+            <select id="templateLength">
+                <option value="short" ${template?.length === 'short' ? 'selected' : ''}>Short</option>
+                <option value="medium" ${template?.length === 'medium' ? 'selected' : ''}>Medium</option>
+                <option value="long" ${template?.length === 'long' ? 'selected' : ''}>Long</option>
+            </select>
+        </div>
+        <div class="template-dialog-field">
+            <label>Content</label>
+            <textarea id="templateContent" placeholder="Enter your message template here...">${template?.content || ''}</textarea>
+        </div>
+        <div class="template-dialog-actions">
+            <button id="cancelTemplateBtn" class="secondary-button">Cancel</button>
+            <button id="saveTemplateBtn" class="primary-button">Save Template</button>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Add event listeners
+    document.getElementById('cancelTemplateBtn').addEventListener('click', () => {
+        dialog.remove();
+    });
+
+    document.getElementById('saveTemplateBtn').addEventListener('click', async () => {
+        const templateData = {
+            name: document.getElementById('templateName').value,
+            type: document.getElementById('templateType').value,
+            length: document.getElementById('templateLength').value,
+            content: document.getElementById('templateContent').value
+        };
+
+        if (!templateData.name || !templateData.type || !templateData.content) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        if (template) {
+            await updateTemplate(template.id, templateData);
+        } else {
+            await saveTemplate(templateData);
+        }
+
+        dialog.remove();
+        loadTemplates();
+    });
+}
+
+// Add floating action button for creating new templates
+function addNewTemplateButton() {
+    const button = document.createElement('button');
+    button.innerHTML = '<i class="fas fa-plus"></i>';
+    button.className = 'new-template-button';
+    
+    // Add click event listener
+    button.addEventListener('click', () => {
+        showTemplateEditDialog(); // Call without parameters for new template
+    });
+
+    document.body.appendChild(button);
+    return button;
+}
+
+let newTemplateButton = null;
+
+// Show/hide new template button based on active section
+function updateNewTemplateButton(sectionId) {
+    if (sectionId === 'TemplatesSection') {
+        if (!newTemplateButton) {
+            newTemplateButton = addNewTemplateButton();
+        }
+        newTemplateButton.style.display = 'flex';
+    } else if (newTemplateButton) {
+        newTemplateButton.style.display = 'none';
+    }
 }

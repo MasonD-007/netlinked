@@ -291,3 +291,67 @@ async function getAIApiKey(AItype) {
     return null;
   }
 }
+
+// Template management functions
+async function saveTemplate(template) {
+  try {
+    // Get existing templates
+    const result = await chrome.storage.local.get('messageTemplates');
+    const existingTemplates = result.messageTemplates || [];
+    
+    // Create new template object with ID and timestamp
+    const newTemplate = {
+      ...template,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString()
+    };
+    
+    // Add new template to the array
+    existingTemplates.push(newTemplate);
+    
+    // Store the updated templates array
+    await chrome.storage.local.set({ messageTemplates: existingTemplates });
+    return true;
+  } catch (error) {
+    console.error('Error saving template:', error);
+    return false;
+  }
+}
+
+async function getTemplates() {
+  try {
+    const result = await chrome.storage.local.get('messageTemplates');
+    return result.messageTemplates || [];
+  } catch (error) {
+    console.error('Error getting templates:', error);
+    return [];
+  }
+}
+
+async function deleteTemplate(templateId) {
+  try {
+    const result = await chrome.storage.local.get('messageTemplates');
+    const templates = result.messageTemplates || [];
+    const updatedTemplates = templates.filter(template => template.id !== templateId);
+    await chrome.storage.local.set({ messageTemplates: updatedTemplates });
+    return true;
+  } catch (error) {
+    console.error('Error deleting template:', error);
+    return false;
+  }
+}
+
+async function updateTemplate(templateId, updatedData) {
+  try {
+    const result = await chrome.storage.local.get('messageTemplates');
+    const templates = result.messageTemplates || [];
+    const updatedTemplates = templates.map(template => 
+      template.id === templateId ? { ...template, ...updatedData } : template
+    );
+    await chrome.storage.local.set({ messageTemplates: updatedTemplates });
+    return true;
+  } catch (error) {
+    console.error('Error updating template:', error);
+    return false;
+  }
+}

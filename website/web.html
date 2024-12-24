@@ -15,6 +15,7 @@
             <button class="nav-button active" data-section="Profiles" id="Profiles">Profiles</button>
             <button class="nav-button" data-section="Jobs" id="Jobs">Jobs (Coming Soon)</button>
             <button class="nav-button" data-section="Messages" id="Messages">Messages</button>
+            <button class="nav-button" data-section="Templates" id="Templates">Templates</button>
             <button class="nav-button" data-section="Settings" id="Settings">Settings</button>
           </nav>
         </div>
@@ -35,7 +36,11 @@
 
           <!-- Jobs Section -->
           <div id="JobsSection" class="content-section hidden">
-            <h1>IN DEVELOPMENT</h1>
+            <div class="development-section">
+                <i class="fas fa-code"></i>
+                <h2>Jobs Feature Coming Soon</h2>
+                <p>We're working hard to bring you a powerful jobs management feature. Stay tuned for updates that will help streamline your job search process.</p>
+            </div>
           </div>
 
           <!-- Messages Section -->
@@ -51,6 +56,26 @@
                 </div>
             </div>
             <!-- Message cards will be inserted here by JavaScript -->
+          </div>
+
+          <!-- Templates Section -->
+          <div id="TemplatesSection" class="content-section hidden">
+            <div class="messages-filters">
+                <div class="filter-group">
+                    <select id="templateTypeFilter" class="settings-select">
+                        <option value="">All Template Types</option>
+                    </select>
+                    <select id="templateLengthFilter" class="settings-select">
+                        <option value="">All Lengths</option>
+                        <option value="short">Short</option>
+                        <option value="medium">Medium</option>
+                        <option value="long">Long</option>
+                    </select>
+                </div>
+            </div>
+            <div class="templates-container">
+              <!-- Template cards will be inserted here by JavaScript -->
+            </div>
           </div>
 
           <!-- Settings Section -->

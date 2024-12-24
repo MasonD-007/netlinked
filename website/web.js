@@ -368,29 +368,34 @@ async function loadProfiles() {
             button.addEventListener('click', async () => {
                 const timestamp = button.getAttribute('data-timestamp');
                 const profile = await getSpecificProfile(timestamp);
+                console.log("Profile:", profile);
+                console.log("Profile URL:", profile.profileURL);
                 
                 if (profile && profile.profileURL) {
                     // Show loading state
                     button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
                     button.disabled = true;
 
-                    // Send message to background script to scrape profile
-                    chrome.runtime.sendMessage({ 
-                        action: "UPDATE_PROFILE",
-                        profileUrl: profile.profileURL,
-                        timestamp: timestamp
-                    }, async (response) => {
-                        if (response && response.success) {
-                            // Update the profile with new data while preserving timestamp and URL
-                            await updateProfile(timestamp, response.profileData);
-                            loadProfiles(); // Reload all profiles
-                        } else {
-                            console.error("Failed to update profile");
-                            alert("Failed to update profile. Please make sure you're logged into LinkedIn.");
-                            // Reset button state
-                            button.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
-                            button.disabled = false;
-                        }
+                    chrome.tabs.create({ url: profile.profileURL }, function(tab) {
+                        // Send message to background script to scrape profile
+                        chrome.runtime.sendMessage({ 
+                            action: "scrapeProfile",
+                            tabId: tab.id
+                        }, async (response) => {
+                            if (response && response.success) {
+                                // Update the profile with new data while preserving timestamp and URL
+                                console.log("Updated profile data:", response.profileData);
+                                await updateProfile(timestamp, response.profileData);
+                                loadProfiles(); // Reload all profiles
+                            } else {
+                                console.error("Failed to update profile");
+                                alert("Failed to update profile. I don't know what you can do about this.");
+                                // Reset button state
+                                button.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+                                button.disabled = false;
+                            }
+                            chrome.tabs.remove(tab.id);
+                        });
                     });
                 }
             });

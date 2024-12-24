@@ -94,7 +94,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             
                             async function handleSkillsScraping() {
                                 try {
-                                    const originalUrl = await loadSkillPage(tab.id);
+                                    await loadSkillPage(tab.id);
                                     const results = await chrome.scripting.executeScript({
                                         target: { tabId: tab.id },
                                         func: scrapeSkills
@@ -121,50 +121,52 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return true; // Keep the message channel open
     } 
-    else if (message.action === "UPDATE_PROFILE") { //Test this function
+    else if (message.action === "UPDATE_PROFILE") {
         console.log("Updating profile");
         chrome.tabs.create({ url: message.profileUrl }, (tab) => {
-            chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                files: ['scrapeprofile/scraper.js']
-        }, () => {
-            // After loading the script, execute the scraping function
-            chrome.scripting.executeScript({
-                target: { tabId: message.tabId },
-                func: async () => {
-                    // Add a small delay to ensure the page is fully loaded
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    const result = await scrapeLinkedInProfile();
-                    return result;
-                }
-            }, (results) => {
-                const profileData = results[0].result;
-                // Create an async function to handle the sequential flow
-                async function handleSkillsScraping() {
-                    try {
-                        const originalUrl = await loadSkillPage(message.tabId);
-                        // Execute scrapeSkills in the context of the web page
-                        const results = await chrome.scripting.executeScript({
-                            target: { tabId: message.tabId },
-                            func: scrapeSkills
+            chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+                if (tabId === tab.id && changeInfo.status === 'complete') {
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    console.log("Profile URL loaded");
+                    chrome.scripting.executeScript({
+                        target: { tabId: tab.id },
+                        files: ['scrapeprofile/scraper.js']
+                    }, () => {
+                        chrome.scripting.executeScript({
+                            target: { tabId: tab.id },
+                            func: async () => {
+                                const result = await scrapeLinkedInProfile();
+                                return result;
+                            }
+                        }, (results) => {
+                            const profileData = results[0].result;
+                            async function handleSkillsScraping() {
+                                try {
+                                    const originalUrl = await loadSkillPage(tab.id);
+                                    const results = await chrome.scripting.executeScript({
+                                        target: { tabId: tab.id },
+                                        func: scrapeSkills
+                                    });
+                                    const skills = results[0].result;
+                                    profileData.skills = skills;
+                                    
+                                    if (originalUrl) {
+                                        chrome.tabs.update(tab.id, { url: originalUrl });
+                                    }
+                                    
+                                    sendResponse({ profileData: profileData, success: true });
+                                } catch (error) {
+                                    console.error("Error during skills scraping:", error);
+                                    sendResponse({ profileData: profileData, success: false });
+                                }
+                            }
+                            handleSkillsScraping();
                         });
-                        const skills = results[0].result;
-                        profileData.skills = skills;
-                        chrome.tabs.update(message.tabId, { url: originalUrl });
-                        sendResponse({ profileData: profileData, success: true });
-                    } catch (error) {
-                        console.error("Error during skills scraping:", error);
-                        sendResponse({ profileData: profileData, success: false });
-                    }
+                    });
                 }
-
-                handleSkillsScraping();
-                return true; // Keep the message channel open
             });
         });
-        
-        return true; // Keep the message channel open for async response
-        });
+        return true; // Keep the message channel open
     }
 });
 

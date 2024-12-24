@@ -168,10 +168,13 @@ body {
 
 .messageOptions {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 16px;
   margin-top: 12px;
+  background-color: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .messageOptions h3 {
@@ -182,12 +185,13 @@ body {
   margin-bottom: 4px;
 }
 
-.aiApiSelect, .messageType {
+.aiApiSelect {
   flex: 1;
   background-color: white;
   padding: 12px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: block !important;
 }
 
 .form-control input[type="radio"] {
@@ -291,4 +295,77 @@ button i, label i {
 button:hover i {
   transform: scale(1.1);
   transition: transform 0.2s ease;
+}
+
+/* Add these styles */
+.template-source-select {
+  margin-top: 16px;
+  background-color: white;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.template-source-select h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.template-source-select label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+#userTemplateSelect {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background-color: white;
+}
+
+/* Add this to ensure message options are hidden by default */
+#messageOptions {
+  display: none;
+}
+
+#messageOptions.hidden {
+  display: none;
+}
+
+#messageOptions:not(.hidden) {
+  display: flex;
+}
+
+/* Add styling for the message container */
+.message-container {
+  margin-top: 16px;
+  background-color: white;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.message-container h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.message-container p {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Add some margin to the generate button */
+#generateButton {
+  margin-top: 16px;
 }

@@ -355,3 +355,15 @@ async function updateTemplate(templateId, updatedData) {
     return false;
   }
 }
+
+// Add this function to get a specific template
+async function getSpecificTemplate(templateId) {
+  try {
+    const result = await chrome.storage.local.get('messageTemplates');
+    const templates = result.messageTemplates || [];
+    return templates.find(template => template.id === templateId) || null;
+  } catch (error) {
+    console.error('Error getting specific template:', error);
+    return null;
+  }
+}

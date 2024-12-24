@@ -59,88 +59,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
     //generate message button
     document.getElementById('generateMessageButton').onclick = async () => {
       showBackButton();
+      document.getElementById('buttonContainer').classList.add('hidden');
+      document.getElementById('messageOptions').classList.remove('hidden');
       document.getElementById('messageType').classList.remove('hidden');
-      document.getElementById('loadingPopup').classList.remove('hidden');
-      
-      try {
-
-        //See what type of message we want to generate
-        const messageType = document.querySelector('input[name="messageType"]:checked').value;
-        if (!messageType) {
-          alert("Please select a message type");
-          return;
-        }
-
-        //See what ai api we want to use
-        const aiApi = document.querySelector('input[name="aiApi"]:checked').value;
-        if (!aiApi) {
-          alert("Please select an AI API");
-          return;
-        }
-
-        //get the api key
-        const apiKey = await getAIApiKey(aiApi);
-        console.log("API key:", apiKey + " for " + aiApi);
-        if (!apiKey) {
-          alert("Please set up your " + aiApi + " API key in settings first.");
-          return;
-        }
-
-
-        //Then make sure we have the clients data
-        const clientData = await getClientProfile();
-        if (!clientData) {
-          alert("No client data available. Please update your profile first.");
-          return;
-        }
-
-        //if we don't have the recipient data, check if saved first, then scrape if needed
-        if (!currentProfileData) {
-          const savedProfile = await isProfileSaved(tabs[0].url);
-          if (savedProfile) {
-            currentProfileData = savedProfile;
-          } else {
-            currentProfileData = await new Promise((resolve, reject) => {
-              chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
-                if (response.success) {
-                  resolve(response.profileData);
-                } else {
-                  reject(new Error("Failed to scrape profile"));
-                }
-              });
-            });
-          }
-        }
-
-        //Hide the message type select
-        document.getElementById('messageType').classList.add('hidden');
-        console.log("Message type selected:", messageType);
-
-        chrome.runtime.sendMessage({ 
-          tabId: tabs[0].id, 
-          action: "generateMessage", 
-          template: messageType, 
-          ClientData: clientData, 
-          RecipientData: currentProfileData, 
-          apiKey: apiKey,
-          aiApi: aiApi
-        }, async (response) => {
-          if (response.success) {
-            document.getElementById('buttonContainer').classList.add('hidden');
-            document.getElementById('messageContainer').classList.remove('hidden');
-            document.getElementById('message').textContent = response.message;
-            await saveGeneratedMessage(response.message, currentProfileData, messageType);
-          } else {
-            alert("Failed to generate message");
-          }
-        });
-        document.getElementById('generateMessageButton').classList.add('hidden');
-      } catch (error) {
-        console.error(error);
-        alert("An error occurred while generating the message");
-      } finally {
-        document.getElementById('loadingPopup').classList.add('hidden');
-      }
     };
     document.getElementById('websiteButton').addEventListener('click', () => {
       chrome.tabs.create({ url: 'website/web.html' });
@@ -412,8 +333,94 @@ function hideBackButton() {
 
 // Add after your DOMContentLoaded event listener
 document.getElementById('backButton').addEventListener('click', () => {
-  window.location.reload();
+  // Show main buttons
+  document.getElementById('buttonContainer').classList.remove('hidden');
+  // Hide message options and other panels
+  document.getElementById('messageOptions').classList.add('hidden');
+  document.getElementById('messageType').classList.add('hidden');
+  document.getElementById('messageContainer').classList.add('hidden');
+  document.getElementById('connectionTypeSelect').classList.add('hidden');
   
   // Hide the back button
   hideBackButton();
+});
+
+// Add this function to process templates
+async function processTemplate(templateContent, clientData, recipientData) {
+  // Replace placeholders with actual data
+  return templateContent
+    .replace(/\{ClientName\}/g, clientData.name)
+    .replace(/\{ClientTitle\}/g, clientData.headline)
+    .replace(/\{RecipientName\}/g, recipientData.name)
+    .replace(/\{RecipientTitle\}/g, recipientData.headline)
+    // Add more replacements as needed
+    ;
+}
+
+// Add this function to load user templates into the dropdown
+async function loadUserTemplates() {
+  const templates = await getTemplates();
+  const templateSelect = document.getElementById('userTemplateSelect');
+  
+  templateSelect.innerHTML = `
+    <option value="">Select a Template</option>
+    ${templates.map(template => `
+      <option value="${template.id}">${template.name}</option>
+    `).join('')}
+  `;
+}
+
+// Add this to your existing code
+document.querySelectorAll('input[name="templateSource"]').forEach(radio => {
+  radio.addEventListener('change', (e) => {
+    const templateContainer = document.getElementById('templateSelectContainer');
+    const aiOptions = document.querySelectorAll('.aiApiSelect, .messageType');
+    
+    if (e.target.value === 'template') {
+      templateContainer.classList.remove('hidden');
+      aiOptions.forEach(el => el.classList.add('hidden'));
+      loadUserTemplates(); // Load templates into dropdown
+    } else {
+      templateContainer.classList.add('hidden');
+      aiOptions.forEach(el => el.classList.remove('hidden'));
+    }
+  });
+});
+
+// Add this after your existing event listeners
+document.getElementById('generateButton').addEventListener('click', async () => {
+  const selectedApi = document.querySelector('input[name="aiApi"]:checked').value;
+  const messageType = document.querySelector('input[name="messageType"]:checked').value;
+  const templateSource = document.querySelector('input[name="templateSource"]:checked').value;
+
+  // Show loading state
+  document.getElementById('loadingPopup').classList.remove('hidden');
+  
+  try { //IT HAS TO IDEA HOW TO GENERATE THE MESSAGE FIX LATER
+    let message;
+    if (templateSource === 'template') {
+      const templateId = document.getElementById('userTemplateSelect').value;
+      if (!templateId) {
+        alert('Please select a template');
+        return;
+      }
+      // Get and process template
+      const template = await getTemplate(templateId);
+      message = await processTemplate(template.content, currentProfileData, {/* add recipient data */});
+    } else {
+      // Generate message using AI
+      message = await generateAIMessage(selectedApi, messageType, currentProfileData);
+    }
+
+    // Display the generated message
+    document.getElementById('message').textContent = message;
+    document.getElementById('messageContainer').classList.remove('hidden');
+    document.getElementById('messageOptions').classList.add('hidden');
+    
+  } catch (error) {
+    console.error('Error generating message:', error);
+    alert('Failed to generate message. Please try again.');
+  } finally {
+    document.getElementById('loadingPopup').classList.add('hidden');
+  }
 });

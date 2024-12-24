@@ -16,45 +16,66 @@
     <div id="scrapeButton">
       <button class="scrapeButton" id="saveProfileButton"><i class="fa-solid fa-save"></i> Save Profile</button>
       <button class="scrapeButton" id="generateMessageButton"><i class="fa-solid fa-message"></i> Generate Message</button>
-      <div id="messageOptions" class="messageOptions">
-        <form id="aiApiSelect" class="aiApiSelect">
-          <h3>AI Provider</h3>
-          <label>
-            <input type="radio" name="aiApi" value="gemini" checked>
-            Gemini
-          </label>
-          <label>
-            <input type="radio" name="aiApi" value="chatgpt">
-            ChatGPT
-            <span id="chatgpt-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
-          </label>
-          <label>
-            <input type="radio" name="aiApi" value="claude">
-            Claude
-            <span id="claude-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
-          </label>
-        </form>
-        <form id="messageType" class="messageType">
-          <h3>Message Type</h3>
-          <label>
-            <input type="radio" name="messageType" value="general-connection-message" checked>
-            Connection Message
-          </label>
-          <label>
-            <input type="radio" name="messageType" value="message-to-alumni">
-            Message to Alumni
-          </label>
-          <label>
-            <input type="radio" name="messageType" value="asking-for-referral">
-            Asking for Referral
-          </label>
-          <label>
-            <input type="radio" name="messageType" value="message-to-recruiter">
-            Message to Recruiter
-          </label>
-        </form>
+    </div>
+  </div>
+  <div id="messageOptions" class="messageOptions hidden">
+    <form id="aiApiSelect" class="aiApiSelect">
+      <h3>AI Provider</h3>
+      <label>
+        <input type="radio" name="aiApi" value="gemini" checked>
+        Gemini
+      </label>
+      <label>
+        <input type="radio" name="aiApi" value="chatgpt">
+        ChatGPT
+        <span id="chatgpt-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
+      </label>
+      <label>
+        <input type="radio" name="aiApi" value="claude">
+        Claude
+        <span id="claude-key-required" class="api-key-required hidden" style="color: red;"> (Requires API Key)</span>
+      </label>
+    </form>
+    <div class="template-source-select">
+      <h3>Message Source</h3>
+      <label>
+        <input type="radio" name="templateSource" value="ai" checked>
+        <i class="fas fa-robot"></i> AI Generated
+      </label>
+      <label>
+        <input type="radio" name="templateSource" value="template">
+        <i class="fas fa-file-alt"></i> Use Template
+      </label>
+      
+      <!-- Template selection dropdown (initially hidden) -->
+      <div id="templateSelectContainer" class="hidden">
+        <select name="userTemplate" id="userTemplateSelect">
+          <option value="">Select a Template</option>
+        </select>
       </div>
     </div>
+    <form id="messageType" class="messageType">
+      <h3>Message Type</h3>
+      <label>
+        <input type="radio" name="messageType" value="general-connection-message" checked>
+        Connection Message
+      </label>
+      <label>
+        <input type="radio" name="messageType" value="message-to-alumni">
+        Message to Alumni
+      </label>
+      <label>
+        <input type="radio" name="messageType" value="asking-for-referral">
+        Asking for Referral
+      </label>
+      <label>
+        <input type="radio" name="messageType" value="message-to-recruiter">
+        Message to Recruiter
+      </label>
+    </form>
+    <button id="generateButton" class="scrapeButton">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Generate
+    </button>
   </div>
   <div id="loadingPopup" class="loading-popup hidden">
     <div class="loading-content">
@@ -109,6 +130,24 @@
             Message to Recruiter
           </label>
         </form>
+        <div class="template-source-select">
+          <h3>Message Source</h3>
+          <label>
+            <input type="radio" name="templateSource" value="ai" checked>
+            <i class="fas fa-robot"></i> AI Generated
+          </label>
+          <label>
+            <input type="radio" name="templateSource" value="template">
+            <i class="fas fa-file-alt"></i> Use Template
+          </label>
+          
+          <!-- Template selection dropdown (initially hidden) -->
+          <div id="templateSelectContainer" class="hidden">
+            <select name="userTemplate" id="userTemplateSelect">
+              <option value="">Select a Template</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
     <div class="data-field">

@@ -103,14 +103,26 @@
               </div>
               <div class="settings-section">
                 <h3>Theme Settings</h3>
-                <div class="select-wrapper">
-                  <select id="themeSelect" class="settings-select">
-                    <option value="#0077b5">LinkedIn Blue</option>
-                    <option value="#2ECC71">Green</option>
-                    <option value="#E74C3C">Red</option>
-                    <option value="#9B59B6">Purple</option>
-                    <option value="#34495E">Dark Blue</option>
-                  </select>
+                <div class="theme-settings-container">
+                  <div class="theme-color-select">
+                    <label>Theme Color</label>
+                    <div class="select-wrapper">
+                      <select id="themeSelect" class="settings-select">
+                        <option value="#0077b5">LinkedIn Blue</option>
+                        <option value="#2ECC71">Green</option>
+                        <option value="#E74C3C">Red</option>
+                        <option value="#9B59B6">Purple</option>
+                        <option value="#34495E">Dark Blue</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="dark-mode-toggle">
+                    <label>Dark Mode</label>
+                    <label class="switch">
+                      <input type="checkbox" id="darkModeToggle">
+                      <span class="slider round"></span>
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

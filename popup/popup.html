@@ -39,7 +39,7 @@
     <div class="template-source-select">
       <h3>Message Source</h3>
       <label>
-        <input type="radio" name="templateSource" value="ai" checked>
+        <input checked type="radio" name="templateSource" value="ai">
         <i class="fas fa-robot"></i> AI Generated
       </label>
       <label>
@@ -54,25 +54,27 @@
         </select>
       </div>
     </div>
-    <form id="messageType" class="messageType">
-      <h3>Message Type</h3>
-      <label>
-        <input type="radio" name="messageType" value="general-connection-message" checked>
-        Connection Message
-      </label>
-      <label>
-        <input type="radio" name="messageType" value="message-to-alumni">
-        Message to Alumni
-      </label>
-      <label>
-        <input type="radio" name="messageType" value="asking-for-referral">
-        Asking for Referral
-      </label>
-      <label>
-        <input type="radio" name="messageType" value="message-to-recruiter">
-        Message to Recruiter
-      </label>
-    </form>
+    <div id="messageTypeContainer" class="messageTypeContainer hidden">
+      <form id="messageType" class="messageType">
+        <h3>Message Type</h3>
+        <label>
+          <input type="radio" name="messageType" value="general-connection-message" checked>
+          Connection Message
+        </label>
+        <label>
+          <input type="radio" name="messageType" value="message-to-alumni">
+          Message to Alumni
+        </label>
+        <label>
+          <input type="radio" name="messageType" value="asking-for-referral">
+          Asking for Referral
+        </label>
+        <label>
+          <input type="radio" name="messageType" value="message-to-recruiter">
+          Message to Recruiter
+        </label>
+      </form>
+    </div>
     <button id="generateButton" class="scrapeButton">
       <i class="fa-solid fa-wand-magic-sparkles"></i> Generate
     </button>

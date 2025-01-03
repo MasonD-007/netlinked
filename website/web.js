@@ -197,17 +197,93 @@ async function loadSettings() {
 
     // Add event listener for theme selection
     document.getElementById('themeSelect').addEventListener('change', function(e) {
-        const color = e.target.value;
-        changeTheme(color);
-        // Save the selected theme
-        chrome.storage.local.set({ 'theme': color });
+        const value = e.target.value;
+        document.documentElement.style.setProperty('--primary-color', value);
+        
+        // Calculate darker shade for hover states
+        const darkerShade = adjustColor(value, -20);
+        document.documentElement.style.setProperty('--primary-color-dark', darkerShade);
+        
+        // Calculate lighter shade for backgrounds
+        document.documentElement.style.setProperty('--primary-color-light', `${value}1A`);
+        
+        // Store the theme preference
+        chrome.storage.local.set({ 'theme-color': value });
     });
 
-    // Load saved theme
-    chrome.storage.local.get('theme', function(result) {
-        if (result.theme) {
-            document.getElementById('themeSelect').value = result.theme;
-            changeTheme(result.theme);
+    // Add event listener for dark mode toggle
+    document.getElementById('darkModeToggle').addEventListener('change', function(e) {
+        if (e.target.checked) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+        // Store the dark mode preference
+        chrome.storage.local.set({ 'dark-mode': e.target.checked });
+    });
+
+    // Listen for theme changes from other parts of the extension
+    chrome.storage.onChanged.addListener(function(changes, namespace) {
+        if (namespace === 'local') {
+            if (changes['theme-color']) {
+                const newColor = changes['theme-color'].newValue;
+                document.documentElement.style.setProperty('--primary-color', newColor);
+                
+                // Calculate darker shade for hover states
+                const darkerShade = adjustColor(newColor, -20);
+                document.documentElement.style.setProperty('--primary-color-dark', darkerShade);
+                
+                // Calculate lighter shade for backgrounds
+                document.documentElement.style.setProperty('--primary-color-light', `${newColor}1A`);
+                
+                // Update select if it exists
+                if (document.getElementById('themeSelect')) {
+                    document.getElementById('themeSelect').value = newColor;
+                }
+            }
+            if (changes['dark-mode']) {
+                if (changes['dark-mode'].newValue) {
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    if (document.getElementById('darkModeToggle')) {
+                        document.getElementById('darkModeToggle').checked = true;
+                    }
+                } else {
+                    document.documentElement.removeAttribute('data-theme');
+                    if (document.getElementById('darkModeToggle')) {
+                        document.getElementById('darkModeToggle').checked = false;
+                    }
+                }
+            }
+        }
+    });
+
+    // On page load, check for saved preferences
+    chrome.storage.local.get(['theme-color', 'dark-mode'], function(result) {
+        const savedThemeColor = result['theme-color'];
+        const savedDarkMode = result['dark-mode'];
+        
+        if (savedThemeColor) {
+            document.documentElement.style.setProperty('--primary-color', savedThemeColor);
+            
+            // Calculate darker shade for hover states
+            const darkerShade = adjustColor(savedThemeColor, -20);
+            document.documentElement.style.setProperty('--primary-color-dark', darkerShade);
+            
+            // Calculate lighter shade for backgrounds
+            document.documentElement.style.setProperty('--primary-color-light', `${savedThemeColor}1A`); // 10% opacity
+        }
+        
+        if (savedDarkMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('darkModeToggle').checked = true;
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.getElementById('darkModeToggle').checked = false;
+        }
+
+        // Update theme color select if it exists
+        if (savedThemeColor && document.getElementById('themeSelect')) {
+            document.getElementById('themeSelect').value = savedThemeColor;
         }
     });
 
@@ -257,6 +333,9 @@ async function loadSettings() {
             <button id="deleteAllProfilesBtn" class="danger-button">
                 <i class="fas fa-user-slash"></i> Delete All Saved Profiles
             </button>
+            <button id="deleteAllTemplatesBtn" class="danger-button">
+                <i class="fas fa-file-alt"></i> Delete All Templates
+            </button>
             <button id="resetAllSettingsBtn" class="danger-button">
                 <i class="fas fa-cog"></i> Reset All Settings
             </button>
@@ -301,6 +380,18 @@ async function loadSettings() {
                 await resetAllSettings();
                 alert('All settings have been reset');
                 window.location.reload();
+            }
+        });
+    });
+
+    document.getElementById('deleteAllTemplatesBtn').addEventListener('click', () => {
+        showConfirmationDialog({
+            title: 'Delete All Templates',
+            message: 'This will permanently delete all your templates. This action cannot be undone.',
+            confirmText: 'delete-all-templates',
+            onConfirm: async () => {
+                await deleteAllTemplates(); // TODO: Implement this function
+                alert('All templates have been deleted');
             }
         });
     });
@@ -543,26 +634,6 @@ function showSection(sectionId) {
     updateNewTemplateButton(sectionId);
 }
 
-function loadTheme() {
-    chrome.storage.local.get('theme', function(result) {
-        if (result.theme) {
-            changeTheme(result.theme);
-        }
-    });
-}
-
-function changeTheme(primaryColor) {
-    const root = document.documentElement;
-    root.style.setProperty('--primary-color', primaryColor);
-    
-    // Calculate darker shade for hover states
-    const darkerShade = adjustColor(primaryColor, -20);
-    root.style.setProperty('--primary-color-dark', darkerShade);
-    
-    // Calculate lighter shade for backgrounds
-    root.style.setProperty('--primary-color-light', `${primaryColor}1A`); // 10% opacity
-}
-
 // Helper function to adjust color brightness
 function adjustColor(color, percent) {
     const num = parseInt(color.replace("#", ""), 16);
@@ -577,6 +648,37 @@ function adjustColor(color, percent) {
         (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
         (B < 255 ? (B < 1 ? 0 : B) : 255)
     ).toString(16).slice(1);
+}
+
+function loadTheme() {
+    chrome.storage.local.get(['theme-color', 'dark-mode'], function(result) {
+        const savedThemeColor = result['theme-color'];
+        const savedDarkMode = result['dark-mode'];
+        
+        if (savedThemeColor) {
+            document.documentElement.style.setProperty('--primary-color', savedThemeColor);
+            
+            // Calculate darker shade for hover states
+            const darkerShade = adjustColor(savedThemeColor, -20);
+            document.documentElement.style.setProperty('--primary-color-dark', darkerShade);
+            
+            // Calculate lighter shade for backgrounds
+            document.documentElement.style.setProperty('--primary-color-light', `${savedThemeColor}1A`); // 10% opacity
+        }
+        
+        if (savedDarkMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.getElementById('darkModeToggle').checked = true;
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+            document.getElementById('darkModeToggle').checked = false;
+        }
+
+        // Update theme color select if it exists
+        if (savedThemeColor && document.getElementById('themeSelect')) {
+            document.getElementById('themeSelect').value = savedThemeColor;
+        }
+    });
 }
 
 function getConnectionTypeIcon(type) {

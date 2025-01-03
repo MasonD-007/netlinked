@@ -2,6 +2,22 @@
   --primary-color: #0077b5;
   --primary-color-dark: #005885;
   --primary-color-light: rgba(0, 119, 181, 0.1);
+  --background-color: #f8fafc;
+  --text-color: #1f2937;
+  --card-background: #ffffff;
+  --border-color: #e5e7eb;
+  --shadow-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] {
+  --primary-color: #1a91da;
+  --primary-color-dark: #0077b5;
+  --primary-color-light: rgba(26, 145, 218, 0.1);
+  --background-color: #1a1a1a;
+  --text-color: #ffffff;
+  --card-background: #2d2d2d;
+  --border-color: #404040;
+  --shadow-color: rgba(0, 0, 0, 0.3);
 }
 
 /* Base styles */
@@ -10,7 +26,8 @@ body {
   margin: 0;
   padding: 12px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #f8fafc;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 /* Button styles */
@@ -49,9 +66,9 @@ body {
 /* Profile data container */
 .profile-data {
   padding: 20px;
-  background-color: white;
+  background-color: var(--card-background);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px var(--shadow-color);
   width: 100%;
   box-sizing: border-box;
 }
@@ -60,7 +77,7 @@ body {
 .data-field {
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .data-field:last-child {
@@ -72,7 +89,7 @@ body {
 .data-field h3 {
   margin: 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--text-color);
   font-weight: 600;
   margin-bottom: 4px;
 }
@@ -80,7 +97,7 @@ body {
 .data-field p {
   margin: 0;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--text-color);
   line-height: 1.5;
 }
 
@@ -96,7 +113,7 @@ body {
 
 .profile-card {
   padding: 12px;
-  background-color: #f3f4f6;
+  background-color: var(--card-background);
   border-radius: 6px;
   margin-bottom: 8px;
 }
@@ -104,12 +121,14 @@ body {
 .profile-card h4 {
   margin: 0 0 4px 0;
   font-size: 14px;
+  color: var(--text-color);
 }
 
 .profile-card p {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-color);
+  opacity: 0.8;
 }
 
 .profile-actions {
@@ -132,7 +151,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -140,7 +159,8 @@ body {
 }
 
 .loading-content {
-  background-color: white;
+  background-color: var(--card-background);
+  color: var(--text-color);
   padding: 2rem;
   border-radius: 0.5rem;
   text-align: center;
@@ -148,7 +168,7 @@ body {
 }
 
 .loading-spinner {
-  border: 4px solid #f3f3f3;
+  border: 4px solid var(--border-color);
   border-top: 4px solid var(--primary-color);
   border-radius: 50%;
   width: 40px;
@@ -171,7 +191,8 @@ body {
   flex-direction: column;
   gap: 16px;
   margin-top: 12px;
-  background-color: white;
+  background-color: var(--card-background);
+  color: var(--text-color);
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -187,11 +208,15 @@ body {
 
 .aiApiSelect {
   flex: 1;
-  background-color: white;
+  background-color: var(--card-background);
   padding: 12px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-color);
   display: block !important;
+}
+
+.aiApiSelect label {
+  color: var(--text-color);
 }
 
 .form-control input[type="radio"] {
@@ -217,14 +242,19 @@ input[type="radio"] {
   border-radius: 4px;
   cursor: pointer;
 }
+
 .connection-type-select {
+  background-color: var(--card-background);
+  color: var(--text-color);
   padding: 15px;
   margin-top: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  flex-direction: column;
 }
 
 .connection-type-select label {
-  display: block;
-  margin: 10px 0;
+  color: var(--text-color);
 }
 
 .connection-type-badge {
@@ -233,6 +263,8 @@ input[type="radio"] {
   border-radius: 12px;
   font-size: 12px;
   margin-top: 5px;
+  background-color: var(--primary-color-light);
+  color: var(--primary-color);
 }
 
 .connection-type-badge.fellow-student { background-color: #e3f2fd; color: #1565c0; }
@@ -300,7 +332,8 @@ button:hover i {
 /* Add these styles */
 .template-source-select {
   margin-top: 16px;
-  background-color: white;
+  background-color: var(--card-background);
+  color: var(--text-color);
   padding: 12px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -325,9 +358,10 @@ button:hover i {
   width: 100%;
   padding: 8px;
   margin-top: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
-  background-color: white;
+  background-color: var(--card-background);
+  color: var(--text-color);
 }
 
 /* Add this to ensure message options are hidden by default */
@@ -346,7 +380,8 @@ button:hover i {
 /* Add styling for the message container */
 .message-container {
   margin-top: 16px;
-  background-color: white;
+  background-color: var(--card-background);
+  color: var(--text-color);
   padding: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -368,4 +403,101 @@ button:hover i {
 /* Add some margin to the generate button */
 #generateButton {
   margin-top: 16px;
+}
+
+.form-group {
+  background-color: var(--card-background);
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.form-group label {
+  color: var(--text-color);
+  display: block;
+  margin-bottom: 8px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-color-light);
+}
+
+.settings-section {
+  background-color: var(--card-background);
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.settings-section h3 {
+  color: var(--text-color);
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+#apiKeyInput {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--card-background);
+  color: var(--text-color);
+}
+
+#apiKeyInput:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-color-light);
+}
+
+.messageType {
+  background-color: var(--card-background);
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 10px;
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.messageType h3 {
+  color: var(--text-color);
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.messageType label {
+  color: var(--text-color);
+}
+
+/* Style scrollbars for dark mode */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--card-background);
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--card-background);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--primary-color);
+  border-radius: 4px;
+  border: 2px solid var(--card-background);
 }

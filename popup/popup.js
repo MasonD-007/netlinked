@@ -266,23 +266,6 @@ document.querySelectorAll('input[name="aiApi"]').forEach(radio => {
 });
 
 // Add this near the start of your popup.js
-function loadTheme() {
-    chrome.storage.local.get('theme', function(result) {
-        if (result.theme) {
-            const root = document.documentElement;
-            root.style.setProperty('--primary-color', result.theme);
-            
-            // Calculate darker shade for hover states
-            const darkerShade = adjustColor(result.theme, -20);
-            root.style.setProperty('--primary-color-dark', darkerShade);
-            
-            // Calculate lighter shade for backgrounds
-            root.style.setProperty('--primary-color-light', `${result.theme}1A`);
-        }
-    });
-}
-
-// Helper function to adjust color brightness (same as in web.js)
 function adjustColor(color, percent) {
     const num = parseInt(color.replace("#", ""), 16);
     const amt = Math.round(2.55 * percent);
@@ -297,6 +280,54 @@ function adjustColor(color, percent) {
         (B < 255 ? (B < 1 ? 0 : B) : 255)
     ).toString(16).slice(1);
 }
+
+function loadTheme() {
+    chrome.storage.local.get(['theme-color', 'dark-mode'], function(result) {
+        const savedThemeColor = result['theme-color'];
+        const savedDarkMode = result['dark-mode'];
+        
+        if (savedThemeColor) {
+            document.documentElement.style.setProperty('--primary-color', savedThemeColor);
+            
+            // Calculate darker shade for hover states
+            const darkerShade = adjustColor(savedThemeColor, -20);
+            document.documentElement.style.setProperty('--primary-color-dark', darkerShade);
+            
+            // Calculate lighter shade for backgrounds
+            document.documentElement.style.setProperty('--primary-color-light', `${savedThemeColor}1A`); // 10% opacity
+        }
+        
+        if (savedDarkMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+    });
+}
+
+// Listen for theme changes
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    if (namespace === 'local') {
+        if (changes['theme-color']) {
+            const newColor = changes['theme-color'].newValue;
+            document.documentElement.style.setProperty('--primary-color', newColor);
+            
+            // Calculate darker shade for hover states
+            const darkerShade = adjustColor(newColor, -20);
+            document.documentElement.style.setProperty('--primary-color-dark', darkerShade);
+            
+            // Calculate lighter shade for backgrounds
+            document.documentElement.style.setProperty('--primary-color-light', `${newColor}1A`);
+        }
+        if (changes['dark-mode']) {
+            if (changes['dark-mode'].newValue) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+        }
+    }
+});
 
 // Call loadTheme when the popup opens
 document.addEventListener('DOMContentLoaded', loadTheme);
@@ -382,6 +413,8 @@ document.querySelectorAll('input[name="templateSource"]').forEach(radio => {
       loadUserTemplates(); // Load templates into dropdown
     } else {
       templateContainer.classList.add('hidden');
+      document.getElementById('messageTypeContainer').classList.remove('hidden');
+      
       aiOptions.forEach(el => el.classList.remove('hidden'));
     }
   });

@@ -139,6 +139,13 @@ async function deleteProfile(savedAt) {
   }
 }
 
+async function deleteAllProfiles() {
+  const profiles = await getProfiles();
+  for (const profile of profiles) {
+    await deleteProfile(profile.savedAt);
+  }
+}
+
 async function printProfile(savedAt) {
   try {
     const key = `profile_${new Date(savedAt).getTime()}`;
@@ -199,6 +206,10 @@ async function deleteGeneratedMessage(RecipientName) {
     console.error('Error deleting generated message:', error);
     return false;
   }
+}
+
+async function deleteAllGeneratedMessages() {
+  await chrome.storage.local.remove('generatedMessages');
 }
 
 async function encryptData(data) {
@@ -341,6 +352,10 @@ async function deleteTemplate(templateId) {
   }
 }
 
+async function deleteAllTemplates() {
+  await chrome.storage.local.remove('messageTemplates');
+}
+
 async function updateTemplate(templateId, updatedData) {
   try {
     const result = await chrome.storage.local.get('messageTemplates');
@@ -366,14 +381,6 @@ async function getSpecificTemplate(templateId) {
     console.error('Error getting specific template:', error);
     return null;
   }
-}
-
-async function deleteAllGeneratedMessages() {
-    await chrome.storage.local.remove('generatedMessages');
-}
-
-async function deleteAllProfiles() {
-    await chrome.storage.local.remove('profiles');
 }
 
 async function resetAllSettings() {

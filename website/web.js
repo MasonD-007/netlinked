@@ -177,6 +177,8 @@ async function loadSettings() {
     document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
         const selectedApi = document.getElementById('aiApiSelect').value;
         const apiKey = document.getElementById('aiApiKey').value;
+        console.log("Selected API:", selectedApi);
+        console.log("API Key:", apiKey);
         if (apiKey.length > 0) {
             saveAIApiKey(selectedApi, apiKey);
             document.getElementById('aiApiKey').value = '';

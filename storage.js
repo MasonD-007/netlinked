@@ -367,3 +367,25 @@ async function getSpecificTemplate(templateId) {
     return null;
   }
 }
+
+async function deleteAllGeneratedMessages() {
+    await chrome.storage.local.remove('generatedMessages');
+}
+
+async function deleteAllProfiles() {
+    await chrome.storage.local.remove('profiles');
+}
+
+async function resetAllSettings() {
+    // List of keys to preserve (add any you don't want to reset)
+    const preserveKeys = ['clientProfile'];
+    
+    // Get all storage data
+    const data = await chrome.storage.local.get(null);
+    
+    // Create an array of keys to remove
+    const keysToRemove = Object.keys(data).filter(key => !preserveKeys.includes(key));
+    
+    // Remove all specified keys
+    await chrome.storage.local.remove(keysToRemove);
+}

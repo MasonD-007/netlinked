@@ -244,6 +244,64 @@ async function loadSettings() {
             });
         });
     });
+
+    const dangerZoneHTML = `
+        <div class="danger-zone">
+            <h3><i class="fas fa-exclamation-triangle"></i> Danger Zone</h3>
+            <p>These actions are destructive and cannot be undone.</p>
+            <button id="deleteAllMessagesBtn" class="danger-button">
+                <i class="fas fa-trash-alt"></i> Delete All Generated Messages
+            </button>
+            <button id="deleteAllProfilesBtn" class="danger-button">
+                <i class="fas fa-user-slash"></i> Delete All Saved Profiles
+            </button>
+            <button id="resetAllSettingsBtn" class="danger-button">
+                <i class="fas fa-cog"></i> Reset All Settings
+            </button>
+        </div>
+    `;
+
+    // Add the danger zone to the settings container
+    document.querySelector('.settings-container').insertAdjacentHTML('beforeend', dangerZoneHTML);
+
+    // Add event listeners for danger zone buttons
+    document.getElementById('deleteAllMessagesBtn').addEventListener('click', () => {
+        showConfirmationDialog({
+            title: 'Delete All Messages',
+            message: 'This will permanently delete all your generated messages. This action cannot be undone.',
+            confirmText: 'delete-all-messages',
+            onConfirm: async () => {
+                await deleteAllGeneratedMessages();
+                alert('All messages have been deleted');
+            }
+        });
+    });
+
+    document.getElementById('deleteAllProfilesBtn').addEventListener('click', () => {
+        showConfirmationDialog({
+            title: 'Delete All Profiles',
+            message: 'This will permanently delete all your saved LinkedIn profiles. This action cannot be undone.',
+            confirmText: 'delete-all-profiles',
+            onConfirm: async () => {
+                await deleteAllProfiles();
+                alert('All profiles have been deleted');
+                window.location.reload();
+            }
+        });
+    });
+
+    document.getElementById('resetAllSettingsBtn').addEventListener('click', () => {
+        showConfirmationDialog({
+            title: 'Reset All Settings',
+            message: 'This will reset all your settings, including API keys and theme preferences. This action cannot be undone.',
+            confirmText: 'reset-all-settings',
+            onConfirm: async () => {
+                await resetAllSettings();
+                alert('All settings have been reset');
+                window.location.reload();
+            }
+        });
+    });
 }
 
 async function loadProfiles() {
@@ -739,4 +797,38 @@ function updateNewTemplateButton(sectionId) {
     } else if (newTemplateButton) {
         newTemplateButton.style.display = 'none';
     }
+}
+
+function showConfirmationDialog({ title, message, confirmText, onConfirm }) {
+    const dialog = document.createElement('div');
+    dialog.className = 'confirmation-dialog';
+    
+    dialog.innerHTML = `
+        <h3><i class="fas fa-exclamation-triangle"></i> ${title}</h3>
+        <p>${message}</p>
+        <p>To confirm, type <strong>${confirmText}</strong> below:</p>
+        <input type="text" class="confirmation-input" placeholder="Type to confirm">
+        <div class="confirmation-actions">
+            <button class="secondary-button" id="cancelConfirmation">Cancel</button>
+            <button class="danger-button" id="confirmAction" disabled>Confirm</button>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    const input = dialog.querySelector('.confirmation-input');
+    const confirmButton = dialog.querySelector('#confirmAction');
+
+    input.addEventListener('input', (e) => {
+        confirmButton.disabled = e.target.value !== confirmText;
+    });
+
+    dialog.querySelector('#cancelConfirmation').addEventListener('click', () => {
+        dialog.remove();
+    });
+
+    confirmButton.addEventListener('click', async () => {
+        await onConfirm();
+        dialog.remove();
+    });
 }

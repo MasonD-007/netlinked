@@ -319,6 +319,7 @@ input[type="radio"] {
 
 /* Ensure back button stays on the left */
 #backButton {
+  color: var(--primary-color);
   margin-right: auto;
 }
 

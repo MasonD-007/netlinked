@@ -396,7 +396,34 @@ document.querySelectorAll('input[name="templateSource"]').forEach(radio => {
   });
 });
 
-// Add this after your existing event listeners
+// Add this function to generate messages using AI
+async function generateAIMessage(selectedApi, messageType, profileData) {
+  const apiKey = await getAIApiKey(selectedApi);
+  if (!apiKey) {
+    throw new Error(`${selectedApi} API key not found`);
+  }
+
+  const clientProfile = await getClientProfile();
+  if (!clientProfile) {
+    throw new Error('Client profile not found. Please save your profile first.');
+  }
+
+  const response = await chrome.runtime.sendMessage({
+    action: "generateMessage",
+    ClientData: clientProfile,
+    RecipientData: profileData,
+    template: messageType,
+    apiKey: apiKey
+  });
+
+  if (!response.success) {
+    throw new Error('Failed to generate message');
+  }
+
+  return response.message;
+}
+
+// Update the generate button click handler
 document.getElementById('generateButton').addEventListener('click', async () => {
   const selectedApi = document.querySelector('input[name="aiApi"]:checked').value;
   const messageType = document.querySelector('input[name="messageType"]:checked').value;
@@ -405,7 +432,7 @@ document.getElementById('generateButton').addEventListener('click', async () => 
   // Show loading state
   document.getElementById('loadingPopup').classList.remove('hidden');
   
-  try { //IT HAS TO IDEA HOW TO GENERATE THE MESSAGE FIX LATER
+  try {
     let message;
     if (templateSource === 'template') {
       const templateId = document.getElementById('userTemplateSelect').value;
@@ -413,13 +440,42 @@ document.getElementById('generateButton').addEventListener('click', async () => 
         alert('Please select a template');
         return;
       }
-      // Get and process template
-      const template = await getTemplate(templateId);
-      message = await processTemplate(template.content, currentProfileData, {/* add recipient data */});
+      
+      // Get template and client profile
+      const template = await getSpecificTemplate(templateId);
+      const clientProfile = await getClientProfile();
+      
+      if (!template) {
+        throw new Error('Template not found');
+      }
+      if (!clientProfile) {
+        throw new Error('Client profile not found. Please save your profile first.');
+      }
+      
+      // First process template with basic replacements
+      const processedTemplate = await processTemplate(template.content, clientProfile, currentProfileData);
+      
+      // Then enhance with AI
+      const response = await chrome.runtime.sendMessage({
+        action: "generateMessage",
+        ClientData: clientProfile,
+        RecipientData: currentProfileData,
+        template: { ...template, content: processedTemplate },
+        apiKey: await getAIApiKey(selectedApi)
+      });
+
+      if (!response.success) {
+        throw new Error('Failed to generate message');
+      }
+      
+      message = response.message;
     } else {
-      // Generate message using AI
+      // Generate message using AI directly
       message = await generateAIMessage(selectedApi, messageType, currentProfileData);
     }
+
+    // Save the generated message
+    await saveGeneratedMessage(message, currentProfileData, messageType);
 
     // Display the generated message
     document.getElementById('message').textContent = message;
@@ -428,7 +484,7 @@ document.getElementById('generateButton').addEventListener('click', async () => 
     
   } catch (error) {
     console.error('Error generating message:', error);
-    alert('Failed to generate message. Please try again.');
+    alert('Failed to generate message: ' + error.message);
   } finally {
     document.getElementById('loadingPopup').classList.add('hidden');
   }

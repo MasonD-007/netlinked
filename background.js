@@ -238,32 +238,63 @@ async function genMessage(ClientData, RecipientData, template, model, apiKey) {
 async function callGemini(ClientData, RecipientData, template, model, apiKey) {
     console.log("Calling Gemini with model:", model, "and API key:", apiKey);
     
-    // Create a detailed prompt that includes context from both profiles
-    const prompt = `
-    You are writing a personalized message on LinkedIn based on the following information:
+    let prompt;
+    if (typeof template === 'object' && template.content) {
+        // If template is a template object, use its content for AI enhancement
+        prompt = `
+        You are enhancing a template message for LinkedIn based on the following information:
 
-    Rules:
-    - The message should be professional but friendly, and reference their shared professional interests or skills where relevant.
-    - Keep the message concise and engaging.
-    - The word count cant be more than 300 characters.
+        Rules:
+        - Keep the message professional but friendly
+        - Maintain the original template's structure and intent
+        - Personalize the message using the provided profile information
+        - Keep the word count under 300 characters
+        - Replace any placeholders with appropriate information
 
-    Client (Sender) Information:
-    - Name: ${ClientData.name}
-    - Headline: ${ClientData.headline}
-    - Current Role: ${ClientData.currentRole}
-    - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
+        Template Content:
+        ${template.content}
 
-    Recipient Information:
-    - Name: ${RecipientData.name}
-    - Headline: ${RecipientData.headline}
-    - Current Role: ${RecipientData.currentRole}
-    - Skills: ${RecipientData.skills.map(s => s.skill).join(', ')}
+        Client (Sender) Information:
+        - Name: ${ClientData.name}
+        - Headline: ${ClientData.headline}
+        - Current Role: ${ClientData.currentRole}
+        - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
 
-    Template Type: ${template}
+        Recipient Information:
+        - Name: ${RecipientData.name}
+        - Headline: ${RecipientData.headline}
+        - Current Role: ${RecipientData.currentRole}
+        - Skills: ${RecipientData.skills.map(s => s.skill).join(', ')}
 
-    Write a personalized ${template} message from ${ClientData.name} to ${RecipientData.name}. 
-    Make it professional but friendly, and reference their shared professional interests or skills where relevant.
-    Keep the message concise and engaging.`;
+        Please enhance and personalize this template message while maintaining its original intent.`;
+    } else {
+        // Original prompt for AI-generated messages
+        prompt = `
+        You are writing a personalized message on LinkedIn based on the following information:
+
+        Rules:
+        - The message should be professional but friendly, and reference their shared professional interests or skills where relevant.
+        - Keep the message concise and engaging.
+        - The word count cant be more than 300 characters.
+
+        Client (Sender) Information:
+        - Name: ${ClientData.name}
+        - Headline: ${ClientData.headline}
+        - Current Role: ${ClientData.currentRole}
+        - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
+
+        Recipient Information:
+        - Name: ${RecipientData.name}
+        - Headline: ${RecipientData.headline}
+        - Current Role: ${RecipientData.currentRole}
+        - Skills: ${RecipientData.skills.map(s => s.skill).join(', ')}
+
+        Template Type: ${template}
+
+        Write a personalized ${template} message from ${ClientData.name} to ${RecipientData.name}. 
+        Make it professional but friendly, and reference their shared professional interests or skills where relevant.
+        Keep the message concise and engaging.`;
+    }
 
     const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
     const response = await fetch(url, {

@@ -1,7 +1,34 @@
 :root {
   --primary-color: #0077b5;
-  --primary-color-dark: #005885;
+  --primary-color-dark: #005582;
   --primary-color-light: rgba(0, 119, 181, 0.1);
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --text-color-secondary: #666666;
+  --card-background: #ffffff;
+  --border-color: #eee;
+  --hover-color: rgba(0, 0, 0, 0.05);
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --input-background: #ffffff;
+  --input-border: #e1e1e1;
+  --transition-speed: 0.3s;
+}
+
+[data-theme="dark"] {
+  --background-color: #1a1a1a;
+  --text-color: #ffffff;
+  --text-color-secondary: #a0a0a0;
+  --card-background: #2d2d2d;
+  --border-color: #404040;
+  --hover-color: rgba(255, 255, 255, 0.05);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --input-background: #3d3d3d;
+  --input-border: #505050;
+}
+
+/* Remove transitions */
+* {
+  transition: none !important;
 }
 
 /* Base styles */
@@ -10,7 +37,8 @@ body {
   margin: 0;
   padding: 12px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: #f8fafc;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 /* Button styles */
@@ -49,18 +77,19 @@ body {
 /* Profile data container */
 .profile-data {
   padding: 20px;
-  background-color: white;
+  background-color: var(--card-background);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px var(--shadow-color);
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid var(--border-color);
 }
 
 /* Data field styling */
 .data-field {
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .data-field:last-child {
@@ -72,7 +101,7 @@ body {
 .data-field h3 {
   margin: 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--text-color-secondary);
   font-weight: 600;
   margin-bottom: 4px;
 }
@@ -80,7 +109,7 @@ body {
 .data-field p {
   margin: 0;
   font-size: 14px;
-  color: #1f2937;
+  color: var(--text-color);
   line-height: 1.5;
 }
 
@@ -96,20 +125,22 @@ body {
 
 .profile-card {
   padding: 12px;
-  background-color: #f3f4f6;
+  background-color: var(--card-background);
   border-radius: 6px;
   margin-bottom: 8px;
+  border: 1px solid var(--border-color);
 }
 
 .profile-card h4 {
   margin: 0 0 4px 0;
   font-size: 14px;
+  color: var(--text-color);
 }
 
 .profile-card p {
   margin: 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-color-secondary);
 }
 
 .profile-actions {
@@ -132,7 +163,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -140,11 +171,12 @@ body {
 }
 
 .loading-content {
-  background-color: white;
+  background-color: var(--card-background);
   padding: 2rem;
   border-radius: 0.5rem;
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px var(--shadow-color);
+  color: var(--text-color);
 }
 
 .loading-spinner {
@@ -171,10 +203,11 @@ body {
   flex-direction: column;
   gap: 16px;
   margin-top: 12px;
-  background-color: white;
+  background-color: var(--card-background);
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  border: 1px solid var(--border-color);
 }
 
 .messageOptions h3 {
@@ -187,11 +220,17 @@ body {
 
 .aiApiSelect {
   flex: 1;
-  background-color: white;
+  background-color: var(--card-background);
   padding: 12px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px var(--shadow-color);
   display: block !important;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.aiApiSelect label {
+  color: var(--text-color);
 }
 
 .form-control input[type="radio"] {
@@ -217,14 +256,17 @@ input[type="radio"] {
   border-radius: 4px;
   cursor: pointer;
 }
+
 .connection-type-select {
+  background-color: var(--card-background);
   padding: 15px;
   margin-top: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
 }
 
 .connection-type-select label {
-  display: block;
-  margin: 10px 0;
+  color: var(--text-color);
 }
 
 .connection-type-badge {
@@ -239,6 +281,24 @@ input[type="radio"] {
 .connection-type-badge.alumni { background-color: #f3e5f5; color: #7b1fa2; }
 .connection-type-badge.industry { background-color: #e8f5e9; color: #2e7d32; }
 .connection-type-badge.recruiter { background-color: #fff3e0; color: #ef6c00; }
+
+/* Update badge colors for dark mode */
+[data-theme="dark"] .connection-type-badge.fellow-student { 
+  background-color: rgba(227, 242, 253, 0.1); 
+  color: #90caf9; 
+}
+[data-theme="dark"] .connection-type-badge.alumni { 
+  background-color: rgba(243, 229, 245, 0.1); 
+  color: #ce93d8; 
+}
+[data-theme="dark"] .connection-type-badge.industry { 
+  background-color: rgba(232, 245, 233, 0.1); 
+  color: #81c784; 
+}
+[data-theme="dark"] .connection-type-badge.recruiter { 
+  background-color: rgba(255, 243, 224, 0.1); 
+  color: #ffb74d; 
+}
 
 /* Add these styles for the navigation bar */
 .nav-bar {
@@ -264,7 +324,7 @@ input[type="radio"] {
 .nav-button {
   background: none;
   border: none;
-  color: var(--primary-color);
+  color: var(--text-color);
   font-weight: 600;
   cursor: pointer;
   padding: 8px;
@@ -273,7 +333,7 @@ input[type="radio"] {
 }
 
 .nav-button:hover {
-  background-color: var(--primary-color-light);
+  background-color: var(--hover-color);
 }
 
 /* Add some spacing between icons and text */
@@ -300,10 +360,11 @@ button:hover i {
 /* Add these styles */
 .template-source-select {
   margin-top: 16px;
-  background-color: white;
+  background-color: var(--card-background);
   padding: 12px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 .template-source-select h3 {
@@ -325,9 +386,10 @@ button:hover i {
   width: 100%;
   padding: 8px;
   margin-top: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--input-border);
   border-radius: 4px;
-  background-color: white;
+  background-color: var(--input-background);
+  color: var(--text-color);
 }
 
 /* Add this to ensure message options are hidden by default */
@@ -346,10 +408,12 @@ button:hover i {
 /* Add styling for the message container */
 .message-container {
   margin-top: 16px;
-  background-color: white;
+  background-color: var(--card-background);
   padding: 16px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
 }
 
 .message-container h3 {
@@ -368,4 +432,21 @@ button:hover i {
 /* Add some margin to the generate button */
 #generateButton {
   margin-top: 16px;
+}
+
+/* Update settings section */
+.settings-section {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+}
+
+.settings-section h3 {
+  color: var(--text-color);
+}
+
+.settings-section input {
+  background-color: var(--input-background);
+  border: 1px solid var(--input-border);
+  color: var(--text-color);
 }

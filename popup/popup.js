@@ -265,11 +265,13 @@ document.querySelectorAll('input[name="aiApi"]').forEach(radio => {
   }
 });
 
-// Add this near the start of your popup.js
+// Update loadTheme function
 function loadTheme() {
-    chrome.storage.local.get('theme', function(result) {
+    chrome.storage.local.get(['theme', 'darkMode'], function(result) {
+        const root = document.documentElement;
+        
+        // Apply color theme
         if (result.theme) {
-            const root = document.documentElement;
             root.style.setProperty('--primary-color', result.theme);
             
             // Calculate darker shade for hover states
@@ -278,6 +280,13 @@ function loadTheme() {
             
             // Calculate lighter shade for backgrounds
             root.style.setProperty('--primary-color-light', `${result.theme}1A`);
+        }
+
+        // Apply dark mode
+        if (result.darkMode) {
+            root.setAttribute('data-theme', 'dark');
+        } else {
+            root.setAttribute('data-theme', 'light');
         }
     });
 }

@@ -1,7 +1,7 @@
 :root {
   --primary-color: #0077b5;
   --primary-color-dark: #005582;
-  --primary-color-light: rgba(0, 119, 181, 0.1);
+  --primary-color-light: #0077b5;
   --background-color: #ffffff;
   --text-color: #000000;
   --text-color-secondary: #666666;
@@ -313,6 +313,7 @@ input[type="radio"] {
 
 /* Position the website button absolutely in the right corner */
 #websiteButton {
+  color: var(--primary-color);
   margin-left: auto;
 }
 

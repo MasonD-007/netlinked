@@ -202,11 +202,22 @@ async function loadSettings() {
     });
 
     // Load saved theme
-    chrome.storage.local.get('theme', function(result) {
+    chrome.storage.local.get(['theme', 'darkMode'], function(result) {
         if (result.theme) {
             document.getElementById('themeSelect').value = result.theme;
             changeTheme(result.theme);
         }
+        if (result.darkMode) {
+            document.getElementById('darkModeToggle').checked = result.darkMode;
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    });
+
+    // Add dark mode toggle listener
+    document.getElementById('darkModeToggle').addEventListener('change', function(e) {
+        const isDarkMode = e.target.checked;
+        document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        chrome.storage.local.set({ 'darkMode': isDarkMode });
     });
 
     // Add this event listener
@@ -223,6 +234,52 @@ async function loadSettings() {
             });
         } catch (error) {
             console.error('Error fetching API keys:', error);
+        }
+    });
+
+    // Add delete profiles event listener
+    document.getElementById('deleteProfilesBtn').addEventListener('click', async () => {
+        const confirmDelete = confirm('Are you sure you want to delete all saved LinkedIn profiles? This action cannot be undone.');
+        if (confirmDelete) {
+            try {
+                // Get all keys from storage
+                const result = await chrome.storage.local.get(null);
+                const keys = Object.keys(result);
+                
+                // Filter keys to delete (only profiles)
+                const keysToDelete = keys.filter(key => key.startsWith('profile_'));
+                
+                // Delete the filtered keys
+                await chrome.storage.local.remove(keysToDelete);
+                
+                // Show success message
+                alert('All profiles have been deleted successfully.');
+                
+                // Reload the page to reflect changes
+                window.location.reload();
+            } catch (error) {
+                console.error('Error deleting profiles:', error);
+                alert('An error occurred while deleting profiles. Please try again.');
+            }
+        }
+    });
+
+    // Add delete messages event listener
+    document.getElementById('deleteMessagesBtn').addEventListener('click', async () => {
+        const confirmDelete = confirm('Are you sure you want to delete all generated messages? This action cannot be undone.');
+        if (confirmDelete) {
+            try {
+                await chrome.storage.local.remove('generatedMessages');
+                
+                // Show success message
+                alert('All messages have been deleted successfully.');
+                
+                // Reload the page to reflect changes
+                window.location.reload();
+            } catch (error) {
+                console.error('Error deleting messages:', error);
+                alert('An error occurred while deleting messages. Please try again.');
+            }
         }
     });
 

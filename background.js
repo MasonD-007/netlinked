@@ -325,14 +325,15 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
 
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === "install") {
-        // Open the website
+        // Open the website with welcome message and API key setup
         chrome.tabs.create({
-            url: chrome.runtime.getURL("website/web.html")
+            url: chrome.runtime.getURL("website/web.html?setup=true")
         }, (tab) => {
             // Show welcome message after the tab is created
             setTimeout(() => {
                 chrome.tabs.sendMessage(tab.id, {
-                    type: "SHOW_WELCOME_MESSAGE"
+                    type: "SHOW_WELCOME_MESSAGE",
+                    setup: true
                 });
             }, 1000);
         });

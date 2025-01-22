@@ -496,27 +496,70 @@ function showWelcomeDialog() {
     dialog.className = 'welcome-dialog';
     
     dialog.innerHTML = `
-        <h2>Welcome to NetLinked!</h2>
-        <p>To get started, we need to collect your LinkedIn profile data. Please make sure you're logged into LinkedIn.</p>
-        <button id="welcomeButton" class="welcome-button">Got it!</button>
+        <div class="welcome-step" id="welcomeStep1">
+            <h2>Welcome to NetLinked!</h2>
+            <p>Let's get you set up with everything you need to use NetLinked effectively.</p>
+            <button id="welcomeNextButton" class="welcome-button">Get Started</button>
+        </div>
+        
+        <div class="welcome-step hidden" id="welcomeStep2">
+            <h2>Set Up Your API Key</h2>
+            <p>NetLinked uses Google's Gemini AI to generate personalized messages. You'll need a Gemini API key to continue.</p>
+            <div class="api-input-container">
+                <input type="password" id="welcomeApiKeyInput" placeholder="Enter your Gemini API key" class="welcome-input">
+                <a href="https://makersuite.google.com/app/apikey" target="_blank" class="get-key-link">Get an API key</a>
+            </div>
+            <button id="saveWelcomeApiKey" class="welcome-button">Save & Continue</button>
+        </div>
+
+        <div class="welcome-step hidden" id="welcomeStep3">
+            <h2>Let's Get Your Profile</h2>
+            <p>Now we'll need to get your LinkedIn profile information to personalize your messages.</p>
+            <button id="welcomeProfileButton" class="welcome-button">Get My Profile</button>
+        </div>
     `;
 
     document.body.appendChild(dialog);
 
-    document.getElementById('welcomeButton').addEventListener('click', () => {
-        dialog.remove();
+    // Step 1 to Step 2
+    document.getElementById('welcomeNextButton').addEventListener('click', () => {
+        document.getElementById('welcomeStep1').classList.add('hidden');
+        document.getElementById('welcomeStep2').classList.remove('hidden');
+    });
+
+    // Step 2 to Step 3
+    document.getElementById('saveWelcomeApiKey').addEventListener('click', async () => {
+        const apiKey = document.getElementById('welcomeApiKeyInput').value;
+        if (!apiKey) {
+            alert('Please enter an API key');
+            return;
+        }
+
+        try {
+            await saveAIApiKey('gemini', apiKey);
+            document.getElementById('welcomeStep2').classList.add('hidden');
+            document.getElementById('welcomeStep3').classList.remove('hidden');
+        } catch (error) {
+            console.error('Error saving API key:', error);
+            alert('Failed to save API key. Please try again.');
+        }
+    });
+
+    // Step 3: Get LinkedIn Profile
+    document.getElementById('welcomeProfileButton').addEventListener('click', () => {
         chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
             chrome.runtime.sendMessage({ 
                 action: "OPEN_LINKEDIN",
                 tabId: tabs[0].id 
-            }, (response) => {
+            }, async (response) => {
                 if (response && response.success) {
                     console.log("Profile scraped successfully");
-                    saveClientProfile(response.profileData).then(() => {
-                        loadProfiles();
-                    });
+                    await saveClientProfile(response.profileData);
+                    dialog.remove();
+                    loadProfiles();
                 } else {
                     console.error("Failed to scrape profile");
+                    alert("Failed to get your profile. Please make sure you're logged into LinkedIn.");
                 }
             });
         });

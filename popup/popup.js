@@ -17,6 +17,56 @@ chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
       currentProfileData = savedProfile;
     }
 
+    //generate summary button
+    document.getElementById('generateSummaryButton').onclick = async () => {
+      showBackButton();
+      document.getElementById('buttonContainer').classList.add('hidden');
+      document.getElementById('loadingPopup').classList.remove('hidden');
+
+      try {
+        // If we don't have profile data yet, scrape it first
+        if (!currentProfileData) {
+          const scrapedData = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+              if (response.success) {
+                resolve(response.profileData);
+              } else {
+                reject(new Error("Failed to scrape profile data"));
+              }
+            });
+          });
+          currentProfileData = scrapedData;
+        }
+
+        // Get the API key
+        const apiKey = await getAIApiKey('gemini');
+        if (!apiKey) {
+          throw new Error('Gemini API key not found. Please add your API key in settings.');
+        }
+
+        // Generate the summary
+        const response = await chrome.runtime.sendMessage({
+          action: "generateSummary",
+          profileData: currentProfileData,
+          apiKey: apiKey
+        });
+
+        if (!response.success) {
+          throw new Error('Failed to generate summary');
+        }
+
+        // Display the summary
+        document.getElementById('summaryText').textContent = response.summary;
+        document.getElementById('summaryContainer').classList.remove('hidden');
+
+      } catch (error) {
+        console.error('Error generating summary:', error);
+        alert('Failed to generate summary: ' + error.message);
+      } finally {
+        document.getElementById('loadingPopup').classList.add('hidden');
+      }
+    };
+
     //save profile button
     document.getElementById('saveProfileButton').onclick = async () => {
       if (savedProfile) {
@@ -349,6 +399,7 @@ document.getElementById('backButton').addEventListener('click', () => {
   document.getElementById('messageType').classList.add('hidden');
   document.getElementById('messageContainer').classList.add('hidden');
   document.getElementById('connectionTypeSelect').classList.add('hidden');
+  document.getElementById('summaryContainer').classList.add('hidden');
   
   // Hide the back button
   hideBackButton();

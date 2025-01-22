@@ -818,31 +818,86 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    background: var(--card-background);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px var(--shadow-color);
     z-index: 1000;
-    max-width: 400px;
+    max-width: 500px;
+    width: 90%;
     text-align: center;
+    border: 1px solid var(--border-color);
 }
 
 .welcome-dialog h2 {
     color: var(--primary-color);
     margin-bottom: 15px;
+    font-size: 24px;
 }
 
 .welcome-dialog p {
     margin-bottom: 20px;
+    color: var(--text-color);
+    line-height: 1.5;
 }
 
 .welcome-button {
     background: var(--primary-color);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
+    padding: 12px 24px;
+    border-radius: 6px;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.welcome-button:hover {
+    background: var(--primary-color-dark);
+}
+
+.welcome-step {
+    transition: opacity 0.3s ease;
+}
+
+.welcome-step.hidden {
+    display: none;
+}
+
+.api-input-container {
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.welcome-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--input-border);
+    border-radius: 6px;
+    font-size: 14px;
+    background-color: var(--input-background);
+    color: var(--text-color);
+    box-sizing: border-box;
+}
+
+.welcome-input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.get-key-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    display: inline-block;
+    margin-top: 5px;
+}
+
+.get-key-link:hover {
+    text-decoration: underline;
 }
 
 /* New template button styles */

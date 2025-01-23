@@ -339,14 +339,25 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
 
 async function generateSummary(profileData, model, apiKey) {
     const prompt = `
-    You are analyzing a LinkedIn profile to help someone decide if they want to connect with this person.
-    Please provide a concise but insightful summary that highlights:
-    - Their current role and experience level
-    - Key skills and expertise
-    - Notable achievements or unique aspects
-    - Potential value as a professional connection
+    Analyze this LinkedIn profile and create a bullet-point summary to help someone decide if they want to connect with this person.
     
-    Keep the summary under 150 words and focus on what makes this person interesting as a potential connection.
+    Format your response in these exact sections with bullet points:
+    
+    Current Role & Level:
+    • [Current position and seniority level]
+    • [Years of experience if available]
+    
+    Key Skills & Expertise:
+    • [List 3-4 most relevant skills]
+    
+    Notable Achievements:
+    • [List 1-2 standout achievements or experiences]
+    
+    Connection Value:
+    • [1-2 points on why they might be a valuable connection]
+
+    Keep each bullet point concise and focus on what makes this person interesting as a potential connection.
+    Do not use any markdown formatting like asterisks or bold text.
 
     Profile Information:
     - Name: ${profileData.name}

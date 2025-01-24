@@ -69,6 +69,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         handleMessageGeneration();
         return true; // Keep the message channel open for async response
     }
+    else if (message.action === "generateSummary") {
+        console.log("Generating summary");
+        async function handleSummaryGeneration() {
+            try {
+                const generatedSummary = await generateSummary(message.profileData, "gemini-1.5-flash", message.apiKey);
+                sendResponse({ summary: generatedSummary, success: true });
+            } catch (error) {
+                console.error("Error during summary generation:", error);
+                sendResponse({ summary: null, success: false });
+            }
+        }
+        handleSummaryGeneration();
+        return true; // Keep the message channel open for async response
+    }
     else if (message.action === "OPEN_LINKEDIN") {
         console.log("Opening LinkedIn");
         chrome.tabs.create({ url: "https://www.linkedin.com/in/me/" }, (tab) => {
@@ -322,6 +336,65 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
 }
 
 //End of generate message
+
+async function generateSummary(profileData, model, apiKey) {
+    const prompt = `
+    Analyze this LinkedIn profile and create a bullet-point summary to help someone decide if they want to connect with this person.
+    
+    Format your response in these exact sections with bullet points:
+    
+    Current Role & Level:
+    • [Current position and seniority level]
+    • [Years of experience if available]
+    
+    Key Skills & Expertise:
+    • [List 3-4 most relevant skills]
+    
+    Notable Achievements:
+    • [List 1-2 standout achievements or experiences]
+    
+    Connection Value:
+    • [1-2 points on why they might be a valuable connection]
+
+    Keep each bullet point concise and focus on what makes this person interesting as a potential connection.
+    Do not use any markdown formatting like asterisks or bold text.
+
+    Profile Information:
+    - Name: ${profileData.name}
+    - Headline: ${profileData.headline}
+    - Current Role: ${profileData.currentRole}
+    - Location: ${profileData.location}
+    - About: ${profileData.about}
+    - Experience: ${JSON.stringify(profileData.experience)}
+    - Skills: ${profileData.skills.map(s => s.skill).join(', ')}
+    `;
+
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "contents": [{ 
+                "parts": [{ 
+                    "text": prompt 
+                }] 
+            }]
+        })
+    });
+
+    const data = await response.json();
+    console.log("Gemini response:", data);
+    
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error("Invalid response from Gemini API");
+    }
+
+    return data.candidates[0].content.parts[0].text;
+}
+
+//End of generate summary
 
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === "install") {

@@ -12,6 +12,7 @@
   <div id="buttonContainer" class="button-container">
     <div id="scrapeButton">
       <button class="scrapeButton" id="saveProfileButton"><i class="fa-solid fa-save"></i> Save Profile</button>
+      <button class="scrapeButton" id="generateSummaryButton"><i class="fa-solid fa-list"></i> Generate Summary</button>
       <button class="scrapeButton" id="generateMessageButton"><i class="fa-solid fa-message"></i> Generate Message</button>
     </div>
   </div>
@@ -218,6 +219,12 @@
       </label>
     </form>
     <button id="saveWithConnectionType" class="scrapeButton"><i class="fa-solid fa-save"></i> Save Profile</button>
+  </div>
+  <div id="summaryContainer" class="summary-container hidden">
+    <div class="summary-content">
+      <h3><i class="fa-solid fa-list"></i> Profile Summary</h3>
+      <p id="summaryText"></p>
+    </div>
   </div>
   <script src="../storage.js"></script>
   <script type="module" src="popup.js"></script>

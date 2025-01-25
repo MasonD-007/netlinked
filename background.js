@@ -58,12 +58,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(message);
         async function handleMessageGeneration() {
             try {
+                if (!message.ClientData || !message.RecipientData) {
+                    console.error("Missing required profile data");
+                    sendResponse({ success: false, error: "Missing profile data" });
+                    return;
+                }
+
+                if (!message.apiKey) {
+                    console.error("Missing API key");
+                    sendResponse({ success: false, error: "API key not found" });
+                    return;
+                }
+
                 const generatedMessage = await genMessage(message.ClientData, message.RecipientData, message.template, "gemini-1.5-flash", message.apiKey);
-                //console.log("Message generated:", generatedMessage);
+                if (!generatedMessage) {
+                    throw new Error("No message was generated");
+                }
                 sendResponse({ message: generatedMessage, success: true });
             } catch (error) {
                 console.error("Error during message generation:", error);
-                sendResponse({ message: null, success: false });
+                sendResponse({ success: false, error: error.message });
             }
         }
         handleMessageGeneration();
@@ -245,16 +259,28 @@ async function scrapeSkills() {
 
 //Generate message
 async function genMessage(ClientData, RecipientData, template, model, apiKey) {
-    const message = await callGemini(ClientData, RecipientData, template, model, apiKey);
-    return message;
+    if (!ClientData || !RecipientData || !template || !apiKey) {
+        throw new Error("Missing required data for message generation");
+    }
+
+    try {
+        const message = await callGemini(ClientData, RecipientData, template, model, apiKey);
+        if (!message) {
+            throw new Error("Failed to generate message content");
+        }
+        return message;
+    } catch (error) {
+        console.error("Error in genMessage:", error);
+        throw new Error(`Failed to generate message: ${error.message}`);
+    }
 }
 
 async function callGemini(ClientData, RecipientData, template, model, apiKey) {
-    console.log("Calling Gemini with model:", model, "and API key:", apiKey);
+    console.log("Calling Gemini with model:", model);
     
     let prompt;
     if (typeof template === 'object' && template.content) {
-        // If template is a template object, use its content for AI enhancement
+        // Template-based message
         prompt = `
         You are enhancing a template message for LinkedIn based on the following information:
 
@@ -269,20 +295,20 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
         ${template.content}
 
         Client (Sender) Information:
-        - Name: ${ClientData.name}
-        - Headline: ${ClientData.headline}
-        - Current Role: ${ClientData.currentRole}
-        - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
+        - Name: ${ClientData.name || 'Not provided'}
+        - Headline: ${ClientData.headline || 'Not provided'}
+        - Current Role: ${ClientData.currentRole || 'Not provided'}
+        - Skills: ${ClientData.skills ? ClientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
         Recipient Information:
-        - Name: ${RecipientData.name}
-        - Headline: ${RecipientData.headline}
-        - Current Role: ${RecipientData.currentRole}
-        - Skills: ${RecipientData.skills.map(s => s.skill).join(', ')}
+        - Name: ${RecipientData.name || 'Not provided'}
+        - Headline: ${RecipientData.headline || 'Not provided'}
+        - Current Role: ${RecipientData.currentRole || 'Not provided'}
+        - Skills: ${RecipientData.skills ? RecipientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
         Please enhance and personalize this template message while maintaining its original intent.`;
     } else {
-        // Original prompt for AI-generated messages
+        // AI-generated message
         prompt = `
         You are writing a personalized message on LinkedIn based on the following information:
 
@@ -292,54 +318,63 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
         - The word count cant be more than 300 characters.
 
         Client (Sender) Information:
-        - Name: ${ClientData.name}
-        - Headline: ${ClientData.headline}
-        - Current Role: ${ClientData.currentRole}
-        - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
+        - Name: ${ClientData.name || 'Not provided'}
+        - Headline: ${ClientData.headline || 'Not provided'}
+        - Current Role: ${ClientData.currentRole || 'Not provided'}
+        - Skills: ${ClientData.skills ? ClientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
         Recipient Information:
-        - Name: ${RecipientData.name}
-        - Headline: ${RecipientData.headline}
-        - Current Role: ${RecipientData.currentRole}
-        - Skills: ${RecipientData.skills.map(s => s.skill).join(', ')}
+        - Name: ${RecipientData.name || 'Not provided'}
+        - Headline: ${RecipientData.headline || 'Not provided'}
+        - Current Role: ${RecipientData.currentRole || 'Not provided'}
+        - Skills: ${RecipientData.skills ? RecipientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
         Template Type: ${template}
 
-        Write a personalized ${template} message from ${ClientData.name} to ${RecipientData.name}. 
+        Write a personalized ${template} message from ${ClientData.name || 'the sender'} to ${RecipientData.name || 'the recipient'}. 
         Make it professional but friendly, and reference their shared professional interests or skills where relevant.
         Keep the message concise and engaging.`;
     }
 
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            "contents": [{ 
-                "parts": [{ 
-                    "text": prompt 
-                }] 
-            }]
-        })
-    });
+    try {
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "contents": [{ 
+                    "parts": [{ 
+                        "text": prompt 
+                    }] 
+                }]
+            })
+        });
 
-    const data = await response.json();
-    console.log("Gemini response:", data);
-    
-    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        throw new Error("Invalid response from Gemini API");
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Gemini response:", data);
+        
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error("Invalid response format from Gemini API");
+        }
+
+        return data.candidates[0].content.parts[0].text;
+    } catch (error) {
+        console.error("Error in callGemini:", error);
+        throw new Error(`API call failed: ${error.message}`);
     }
-
-    return data.candidates[0].content.parts[0].text;
 }
 
 //End of generate message
 
 async function generateSummary(profileData, model, apiKey) {
     const prompt = `
-    Analyze this LinkedIn profile and create a bullet-point summary to help someone decide if they want to connect with this person.
+    Analyze this LinkedIn profile in relation to the client's profile and create a bullet-point summary to help decide if they want to connect with this person.
     
     Format your response in these exact sections with bullet points:
     
@@ -354,12 +389,20 @@ async function generateSummary(profileData, model, apiKey) {
     • [List 1-2 standout achievements or experiences]
     
     Connection Value:
-    • [1-2 points on why they might be a valuable connection]
+    • [1-2 points on why they might be a valuable connection based on shared interests/skills]
+    • [Any unique value they could bring to your network]
 
     Keep each bullet point concise and focus on what makes this person interesting as a potential connection.
     Do not use any markdown formatting like asterisks or bold text.
+    Highlight any overlapping skills, industries, or experiences between the profiles.
 
-    Profile Information:
+    Client (Your) Profile Information:
+    - Name: ${ClientData.name}
+    - Headline: ${ClientData.headline}
+    - Current Role: ${ClientData.currentRole}
+    - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
+
+    Target Profile Information:
     - Name: ${profileData.name}
     - Headline: ${profileData.headline}
     - Current Role: ${profileData.currentRole}

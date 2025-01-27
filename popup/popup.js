@@ -497,6 +497,20 @@ document.getElementById('generateButton').addEventListener('click', async () => 
   document.getElementById('loadingPopup').classList.remove('hidden');
   
   try {
+    // If we don't have profile data yet, scrape it first
+    if (!currentProfileData) {
+      const scrapedData = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+          if (!response || !response.success) {
+            reject(new Error("Failed to scrape profile data"));
+          } else {
+            resolve(response.profileData);
+          }
+        });
+      });
+      currentProfileData = scrapedData;
+    }
+
     // Get client profile data
     const clientProfile = await getClientProfile();
     if (!clientProfile) {

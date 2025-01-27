@@ -87,28 +87,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log("Generating summary");
         async function handleSummaryGeneration() {
             try {
-                if (!message.profileData || !message.ClientData) {
-                    console.error("Missing required profile data");
-                    sendResponse({ success: false, error: "Missing profile data" });
-                    return;
-                }
-
-                if (!message.apiKey) {
-                    console.error("Missing API key");
-                    sendResponse({ success: false, error: "API key not found" });
-                    return;
-                }
-
-                const generatedSummary = await generateSummary(
-                    message.profileData,
-                    "gemini-1.5-flash",
-                    message.apiKey,
-                    message.ClientData
-                );
+                const generatedSummary = await generateSummary(message.profileData, "gemini-1.5-flash", message.apiKey);
                 sendResponse({ summary: generatedSummary, success: true });
             } catch (error) {
                 console.error("Error during summary generation:", error);
-                sendResponse({ success: false, error: error.message });
+                sendResponse({ summary: null, success: false });
             }
         }
         handleSummaryGeneration();
@@ -389,15 +372,7 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
 
 //End of generate message
 
-async function generateSummary(profileData, model, apiKey, ClientData) {
-    if (!profileData || !apiKey) {
-        throw new Error("Missing required data for summary generation");
-    }
-
-    if (!ClientData) {
-        throw new Error("Client profile data is required for comparison");
-    }
-
+async function generateSummary(profileData, model, apiKey) {
     const prompt = `
     Analyze this LinkedIn profile in relation to the client's profile and create a bullet-point summary to help decide if they want to connect with this person.
     
@@ -425,7 +400,7 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     - Name: ${ClientData.name}
     - Headline: ${ClientData.headline}
     - Current Role: ${ClientData.currentRole}
-    - Skills: ${ClientData.skills ? ClientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
+    - Skills: ${ClientData.skills.map(s => s.skill).join(', ')}
 
     Target Profile Information:
     - Name: ${profileData.name}
@@ -434,40 +409,32 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     - Location: ${profileData.location}
     - About: ${profileData.about}
     - Experience: ${JSON.stringify(profileData.experience)}
-    - Skills: ${profileData.skills ? profileData.skills.map(s => s.skill).join(', ') : 'Not provided'}
+    - Skills: ${profileData.skills.map(s => s.skill).join(', ')}
     `;
 
-    try {
-        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "contents": [{ 
-                    "parts": [{ 
-                        "text": prompt 
-                    }] 
-                }]
-            })
-        });
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            "contents": [{ 
+                "parts": [{ 
+                    "text": prompt 
+                }] 
+            }]
+        })
+    });
 
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            throw new Error("Invalid response format from Gemini API");
-        }
-
-        return data.candidates[0].content.parts[0].text;
-    } catch (error) {
-        console.error("Error in generateSummary:", error);
-        throw new Error(`Failed to generate summary: ${error.message}`);
+    const data = await response.json();
+    console.log("Gemini response:", data);
+    
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        throw new Error("Invalid response from Gemini API");
     }
+
+    return data.candidates[0].content.parts[0].text;
 }
 
 //End of generate summary

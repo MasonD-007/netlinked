@@ -28,10 +28,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
         if (!currentProfileData) {
           const scrapedData = await new Promise((resolve, reject) => {
             chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
-              if (response.success) {
-                resolve(response.profileData);
-              } else {
+              if (!response || !response.success) {
                 reject(new Error("Failed to scrape profile data"));
+              } else {
+                resolve(response.profileData);
               }
             });
           });

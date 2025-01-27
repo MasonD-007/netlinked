@@ -371,11 +371,6 @@ async function loadProfiles() {
                                                 <i class="fas fa-external-link-alt"></i> View on LinkedIn
                                             </button>
                                         </div>
-                                        <div class="profile-actions-middle">
-                                            <button class="view-data-btn secondary-button" data-profile="${encodeURIComponent(JSON.stringify(profile))}">
-                                                <i class="fas fa-database"></i> View Data
-                                            </button>
-                                        </div>
                                         <div class="profile-actions-bottom">
                                             <button class="delete-profile-btn secondary-button" data-timestamp="${profile.savedAt}">
                                                 <i class="fas fa-trash-alt"></i> Delete
@@ -426,19 +421,6 @@ async function loadProfiles() {
                     window.location.reload();
                 } catch (error) {
                     console.error('Error deleting profile:', error);
-                }
-            });
-        });
-
-        // Add event listener for view data button
-        document.querySelectorAll('.view-data-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                try {
-                    const profileData = JSON.parse(decodeURIComponent(button.getAttribute('data-profile')));
-                    showDataDialog(profileData);
-                } catch (error) {
-                    console.error('Error parsing profile data:', error);
-                    alert('Error displaying profile data. Please try again.');
                 }
             });
         });
@@ -746,73 +728,115 @@ async function loadTemplates() {
     const templateTypes = [...new Set(templates.map(t => t.type))];
     const typeFilter = document.getElementById('templateTypeFilter');
     typeFilter.innerHTML = `
-        <option value="">All Types</option>
+        <option value="">All Template Types</option>
         ${templateTypes.map(type => `
             <option value="${type}">${type}</option>
         `).join('')}
     `;
 
-    // Add length filter dropdown
+    // Add filter event listeners
     const lengthFilter = document.getElementById('templateLengthFilter');
-    lengthFilter.innerHTML = `
-        <option value="">All Lengths</option>
-        <option value="short">Short</option>
-        <option value="medium">Medium</option>
-        <option value="long">Long</option>
-    `;
-
-    // Add event listeners for filter changes
     typeFilter.addEventListener('change', () => {
-        const selectedType = typeFilter.value;
-        const selectedLength = lengthFilter.value;
-        const filteredTemplates = filterTemplates(selectedType, selectedLength);
+        const filteredTemplates = filterTemplates(typeFilter.value, lengthFilter.value);
         renderTemplates(filteredTemplates);
     });
     lengthFilter.addEventListener('change', () => {
-        const selectedType = typeFilter.value;
-        const selectedLength = lengthFilter.value;
-        const filteredTemplates = filterTemplates(selectedType, selectedLength);
+        const filteredTemplates = filterTemplates(typeFilter.value, lengthFilter.value);
         renderTemplates(filteredTemplates);
     });
 
     // Initial render
-    const filteredTemplates = filterTemplates('', '');
-    renderTemplates(filteredTemplates);
+    renderTemplates(templates);
 }
 
-// Add this function to show the data dialog
-function showDataDialog(profileData) {
+function showTemplateEditDialog(template = null) {
     const dialog = document.createElement('div');
     dialog.className = 'template-dialog';
     
-    // Format the profile data for display
-    const formattedData = Object.entries(profileData).map(([key, value]) => {
-        let displayValue = value;
-        if (typeof value === 'object' && value !== null) {
-            displayValue = JSON.stringify(value, null, 2);
-        }
-        return `<div class="data-field">
-            <h4>${key}:</h4>
-            <pre>${displayValue}</pre>
-        </div>`;
-    }).join('');
-
     dialog.innerHTML = `
-        <div class="dialog-header">
-            <h2><i class="fas fa-database"></i> Profile Data for ${profileData.name}</h2>
-            <button id="closeDataDialog" class="secondary-button">
-                <i class="fas fa-times"></i> Close
-            </button>
+        <h2>${template ? 'Edit Template' : 'New Template'}</h2>
+        <div class="template-dialog-field">
+            <label>Name</label>
+            <input type="text" id="templateName" value="${template?.name || ''}">
         </div>
-        <div class="dialog-content" style="max-height: 70vh; overflow-y: auto;">
-            ${formattedData}
+        <div class="template-dialog-field">
+            <label>Type</label>
+            <input type="text" id="templateType" value="${template?.type || ''}" placeholder="e.g., Connection Request, Follow-up, etc.">
+        </div>
+        <div class="template-dialog-field">
+            <label>Length</label>
+            <select id="templateLength">
+                <option value="short" ${template?.length === 'short' ? 'selected' : ''}>Short</option>
+                <option value="medium" ${template?.length === 'medium' ? 'selected' : ''}>Medium</option>
+                <option value="long" ${template?.length === 'long' ? 'selected' : ''}>Long</option>
+            </select>
+        </div>
+        <div class="template-dialog-field">
+            <label>Content</label>
+            <textarea id="templateContent" placeholder="Enter your message template here...">${template?.content || ''}</textarea>
+        </div>
+        <div class="template-dialog-actions">
+            <button id="cancelTemplateBtn" class="secondary-button">Cancel</button>
+            <button id="saveTemplateBtn" class="primary-button">Save Template</button>
         </div>
     `;
 
     document.body.appendChild(dialog);
 
-    // Add event listener to close button
-    document.getElementById('closeDataDialog').addEventListener('click', () => {
+    // Add event listeners
+    document.getElementById('cancelTemplateBtn').addEventListener('click', () => {
         dialog.remove();
     });
+
+    document.getElementById('saveTemplateBtn').addEventListener('click', async () => {
+        const templateData = {
+            name: document.getElementById('templateName').value,
+            type: document.getElementById('templateType').value,
+            length: document.getElementById('templateLength').value,
+            content: document.getElementById('templateContent').value
+        };
+
+        if (!templateData.name || !templateData.type || !templateData.content) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        if (template) {
+            await updateTemplate(template.id, templateData);
+        } else {
+            await saveTemplate(templateData);
+        }
+
+        dialog.remove();
+        loadTemplates();
+    });
+}
+
+// Add floating action button for creating new templates
+function addNewTemplateButton() {
+    const button = document.createElement('button');
+    button.innerHTML = '<i class="fas fa-plus"></i>';
+    button.className = 'new-template-button';
+    
+    // Add click event listener
+    button.addEventListener('click', () => {
+        showTemplateEditDialog(); // Call without parameters for new template
+    });
+
+    document.body.appendChild(button);
+    return button;
+}
+
+let newTemplateButton = null;
+
+// Show/hide new template button based on active section
+function updateNewTemplateButton(sectionId) {
+    if (sectionId === 'TemplatesSection') {
+        if (!newTemplateButton) {
+            newTemplateButton = addNewTemplateButton();
+        }
+        newTemplateButton.style.display = 'flex';
+    } else if (newTemplateButton) {
+        newTemplateButton.style.display = 'none';
+    }
 }

@@ -497,10 +497,16 @@ document.getElementById('generateButton').addEventListener('click', async () => 
   document.getElementById('loadingPopup').classList.remove('hidden');
   
   try {
+    // Get current tab first
+    const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!currentTab) {
+      throw new Error("No active tab found");
+    }
+
     // If we don't have profile data yet, scrape it first
     if (!currentProfileData) {
       const scrapedData = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ tabId: tabs[0].id, action: "scrapeProfile" }, (response) => {
+        chrome.runtime.sendMessage({ tabId: currentTab.id, action: "scrapeProfile" }, (response) => {
           if (!response || !response.success) {
             reject(new Error("Failed to scrape profile data"));
           } else {

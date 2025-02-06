@@ -8,9 +8,10 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         showSection('ProfilesSection');
         loadProfiles();
     });
-    document.getElementById('Jobs').addEventListener('click', () => {
-        setActive('Jobs');
-        showSection('JobsSection');
+    document.getElementById('Chat').addEventListener('click', async () => {
+        setActive('Chat');
+        showSection('ChatSection');
+        await loadChatProfiles();
     });
     document.getElementById('Messages').addEventListener('click', () => {
         setActive('Messages');
@@ -838,5 +839,231 @@ function updateNewTemplateButton(sectionId) {
         newTemplateButton.style.display = 'flex';
     } else if (newTemplateButton) {
         newTemplateButton.style.display = 'none';
+    }
+}
+
+// Add these new functions for chat functionality
+async function loadChatProfiles() {
+    const profiles = await getProfiles();
+    const select = document.getElementById('chatProfileSelect');
+    
+    // Clear existing options except the first one
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+    
+    // Add profiles to select
+    profiles.forEach(profile => {
+        const option = document.createElement('option');
+        option.value = profile.savedAt; // Use timestamp as value
+        option.textContent = `${profile.name} - ${profile.headline || 'No headline'}`;
+        select.appendChild(option);
+    });
+
+    // Initialize chat UI
+    await initializeChat();
+}
+
+async function initializeChat() {
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendButton = document.getElementById('sendChatButton');
+    const profileSelect = document.getElementById('chatProfileSelect');
+
+    // Clear existing messages
+    chatMessages.innerHTML = '';
+
+    // Add welcome message
+    const welcomeMessage = document.createElement('div');
+    welcomeMessage.className = 'chat-message ai';
+    const welcomeContentDiv = document.createElement('div');
+    welcomeContentDiv.className = 'chat-message-content typing-animation';
+    welcomeMessage.appendChild(welcomeContentDiv);
+    chatMessages.appendChild(welcomeMessage);
+
+    // Type out welcome message
+    const welcomeText = `Hello! Select a profile from the dropdown and ask me anything about them. I can help you:
+
+- Analyze their background and experience
+- Compare their skills with yours
+- Suggest talking points for conversations
+- Identify potential collaboration opportunities`;
+
+    await typeText(welcomeContentDiv, welcomeText);
+    welcomeContentDiv.classList.remove('typing-animation');
+
+    // Handle send button click
+    sendButton.onclick = () => sendChatMessage();
+
+    // Handle enter key in textarea
+    chatInput.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendChatMessage();
+        }
+    };
+}
+
+async function sendChatMessage() {
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const profileSelect = document.getElementById('chatProfileSelect');
+    const message = chatInput.value.trim();
+
+    if (!message) return;
+
+    if (!profileSelect.value) {
+        // Show error if no profile is selected
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'chat-error';
+        errorDiv.textContent = 'Please select a profile to chat about first.';
+        chatMessages.appendChild(errorDiv);
+        return;
+    }
+
+    // Add user message
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.className = 'chat-message user';
+    userMessageDiv.innerHTML = `
+        <div class="chat-message-content visible">${message}</div>
+    `;
+    chatMessages.appendChild(userMessageDiv);
+
+    // Clear input
+    chatInput.value = '';
+
+    // Add loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'chat-loading';
+    loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> AI is thinking...';
+    chatMessages.appendChild(loadingDiv);
+
+    try {
+        // Get profiles
+        const selectedProfile = await getSpecificProfile(profileSelect.value);
+        const clientProfile = await getClientProfile();
+        
+        // Get API key
+        const apiKey = await getAIApiKey('gemini');
+        
+        if (!apiKey) {
+            throw new Error('Please set up your Gemini API key in the Settings tab first.');
+        }
+
+        // Call Gemini API
+        const response = await callGeminiChat(message, selectedProfile, clientProfile, apiKey);
+
+        // Remove loading indicator
+        loadingDiv.remove();
+
+        // Add AI response with typing animation
+        const aiMessageDiv = document.createElement('div');
+        aiMessageDiv.className = 'chat-message ai';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'chat-message-content typing-animation';
+        aiMessageDiv.appendChild(contentDiv);
+        chatMessages.appendChild(aiMessageDiv);
+
+        // Animate the text
+        await typeText(contentDiv, response);
+
+        // Remove typing animation class after text is complete
+        contentDiv.classList.remove('typing-animation');
+    } catch (error) {
+        // Remove loading indicator
+        loadingDiv.remove();
+
+        // Show error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'chat-error';
+        errorDiv.textContent = error.message;
+        chatMessages.appendChild(errorDiv);
+    }
+
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Add new typewriter function
+async function typeText(element, text) {
+    element.textContent = '';
+    element.classList.add('visible');
+    
+    const words = text.split(' ');
+    let currentText = '';
+    
+    for (let i = 0; i < words.length; i++) {
+        currentText += words[i] + ' ';
+        element.textContent = currentText;
+        
+        // Adjust the delay based on punctuation
+        const delay = words[i].match(/[.!?]$/) ? 150 : 50;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Scroll while typing
+        element.parentElement.parentElement.scrollTop = element.parentElement.parentElement.scrollHeight;
+    }
+}
+
+async function callGeminiChat(message, selectedProfile, clientProfile, apiKey) {
+    const prompt = `
+    You are a helpful AI assistant analyzing LinkedIn profiles. You have access to two profiles:
+
+    1. The client's (sender's) profile:
+    - Name: ${clientProfile.name}
+    - Headline: ${clientProfile.headline}
+    - Current Role: ${clientProfile.currentRole}
+    - Skills: ${clientProfile.skills ? clientProfile.skills.map(s => s.skill).join(', ') : 'Not provided'}
+
+    2. The profile being discussed:
+    - Name: ${selectedProfile.name}
+    - Headline: ${selectedProfile.headline}
+    - Current Role: ${selectedProfile.currentRole}
+    - Location: ${selectedProfile.location}
+    - About: ${selectedProfile.about}
+    - Experience: ${JSON.stringify(selectedProfile.experience)}
+    - Skills: ${selectedProfile.skills ? selectedProfile.skills.map(s => s.skill).join(', ') : 'Not provided'}
+
+    The user's question is: "${message}"
+
+    Please provide a helpful, professional response that:
+    1. Directly answers the user's question
+    2. References specific details from both profiles when relevant
+    3. Maintains a friendly, professional tone
+    4. Uses bullet points or formatting when it helps clarity
+    5. Keeps responses concise but informative
+
+    Format your response in a way that's easy to read and understand.`;
+
+    try {
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "contents": [{
+                    "parts": [{
+                        "text": prompt
+                    }]
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`API request failed with status ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+            throw new Error("Invalid response format from Gemini API");
+        }
+
+        return data.candidates[0].content.parts[0].text;
+    } catch (error) {
+        console.error("Error in callGeminiChat:", error);
+        throw new Error(`Failed to generate response: ${error.message}`);
     }
 }

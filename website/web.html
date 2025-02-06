@@ -13,7 +13,7 @@
           <h1>Netlinked</h1>
           <nav class="sidebar-nav">
             <button class="nav-button active" data-section="Profiles" id="Profiles">Profiles</button>
-            <button class="nav-button" data-section="Jobs" id="Jobs">Jobs (Coming Soon)</button>
+            <button class="nav-button" data-section="Chat" id="Chat">Chat</button>
             <button class="nav-button" data-section="Messages" id="Messages">Messages</button>
             <button class="nav-button" data-section="Templates" id="Templates">Templates</button>
             <button class="nav-button" data-section="Settings" id="Settings">Settings</button>
@@ -40,6 +40,29 @@
                 <i class="fas fa-code"></i>
                 <h2>Jobs Feature Coming Soon</h2>
                 <p>We're working hard to bring you a powerful jobs management feature. Stay tuned for updates that will help streamline your job search process.</p>
+            </div>
+          </div>
+
+          <!-- Replace with Chat Section -->
+          <div id="ChatSection" class="content-section hidden">
+            <div class="chat-container">
+              <div class="chat-sidebar">
+                <h3>Select Profile</h3>
+                <select id="chatProfileSelect" class="settings-select">
+                  <option value="">Choose a profile to discuss...</option>
+                </select>
+              </div>
+              <div class="chat-main">
+                <div class="chat-messages" id="chatMessages">
+                  <!-- Chat messages will be inserted here -->
+                </div>
+                <div class="chat-input-container">
+                  <textarea id="chatInput" placeholder="Ask a question about this profile..." class="chat-input"></textarea>
+                  <button id="sendChatButton" class="primary-button">
+                    <i class="fas fa-paper-plane"></i> Send
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

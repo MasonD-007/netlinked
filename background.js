@@ -295,10 +295,10 @@ async function genMessage(ClientData, RecipientData, template, model, apiKey) {
 async function callGemini(ClientData, RecipientData, template, model, apiKey) {
     console.log("Calling Gemini with model:", model);
     
-    let prompt;
+    let promptText;
     if (typeof template === 'object' && template.content) {
         // Template-based message
-        prompt = `
+        promptText = `
         You are enhancing a template message for LinkedIn based on the following information:
 
         Rules:
@@ -326,7 +326,7 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
         Please enhance and personalize this template message while maintaining its original intent.`;
     } else {
         // AI-generated message
-        prompt = `
+        promptText = `
         You are writing a personalized message on LinkedIn based on the following information:
 
         Rules:
@@ -354,18 +354,26 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
     }
 
     try {
-        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" + apiKey;
         const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                "contents": [{ 
-                    "parts": [{ 
-                        "text": prompt 
-                    }] 
-                }]
+                "contents": [{
+                    "role": "user",
+                    "parts": [{
+                        "text": promptText
+                    }]
+                }],
+                "generationConfig": {
+                    "temperature": 1,
+                    "topK": 40,
+                    "topP": 0.95,
+                    "maxOutputTokens": 8192,
+                    "responseMimeType": "text/plain"
+                }
             })
         });
 

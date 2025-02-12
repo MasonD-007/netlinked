@@ -401,3 +401,168 @@ async function clearChatHistory(profileId) {
     return false;
   }
 }
+
+// Feedback management functions
+async function saveFeedback(feedback) {
+  try {
+    // Get existing feedback
+    const result = await chrome.storage.local.get('userFeedback');
+    const existingFeedback = result.userFeedback || [];
+    
+    // Add new feedback to array
+    existingFeedback.push(feedback);
+    
+    // Store updated feedback array
+    await chrome.storage.local.set({ userFeedback: existingFeedback });
+
+    // Also send feedback to your server or email if you want
+    try {
+      await sendFeedbackToServer(feedback);
+    } catch (error) {
+      console.error('Error sending feedback to server:', error);
+      // Still return true since we saved locally
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving feedback:', error);
+    throw error;
+  }
+}
+
+// Encrypted EmailJS credentials
+const ENCRYPTION_KEY = 'NetLinked_Secure_Key_2024';
+
+const ENCRYPTED_CREDENTIALS = {
+  key: "KWtOOjd8eDU9me+d/sDsetILog9Eg1N2Ar7u06nxkBQPPImr/cJSEbKr1nTb",
+  template: "D/QyYQ9VNIq9IXXQ6cLKkGkTQ1hBMOMz6/kYKA4XRtfx3+MZ2BJ9ICixSw==",
+  service: "61Az8ad8IuaESDeRUN/qJ5oNTTws23OQbOVSZ+VK9T43fkWUmGDlQishWOI="
+};
+
+// Function to decrypt credentials at runtime
+async function getEmailJSCredentials() {
+  try {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(ENCRYPTION_KEY),
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits', 'deriveKey']
+    );
+
+    // Derive the key using PBKDF2
+    const key = await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        salt: encoder.encode('NetLinkedSalt'),
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+
+    // Decrypt each credential
+    const decryptCredential = async (encryptedData) => {
+      // Base64 decode and split into parts
+      const decoded = atob(encryptedData);
+      const data = new Uint8Array(decoded.length);
+      for (let i = 0; i < decoded.length; i++) {
+        data[i] = decoded.charCodeAt(i);
+      }
+
+      // First 12 bytes are IV, rest is encrypted data
+      const iv = data.slice(0, 12);
+      const encrypted = data.slice(12);
+
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        encrypted
+      );
+
+      return new TextDecoder().decode(decrypted);
+    };
+
+    // Decrypt all credentials
+    const publicKey = await decryptCredential(ENCRYPTED_CREDENTIALS.key);
+    const templateId = await decryptCredential(ENCRYPTED_CREDENTIALS.template);
+    const serviceId = await decryptCredential(ENCRYPTED_CREDENTIALS.service);
+
+    return {
+      publicKey,
+      serviceId: templateId,  // These are swapped intentionally
+      templateId: serviceId   // These are swapped intentionally
+    };
+  } catch (error) {
+    console.error('Error decrypting credentials:', error);
+    return null;
+  }
+}
+
+async function sendFeedbackToServer(feedback) {
+  try {
+    // Get decrypted credentials
+    const credentials = await getEmailJSCredentials();
+    if (!credentials) {
+      throw new Error('Failed to get EmailJS credentials');
+    }
+
+    console.log('Sending feedback to server...');
+    const requestBody = {
+      service_id: credentials.serviceId,
+      template_id: credentials.templateId,
+      user_id: credentials.publicKey,
+      template_params: {
+        rating: feedback.rating,
+        features: feedback.features.join(', '),
+        improvements: feedback.improvements || 'No improvements suggested',
+        issues: feedback.issues || 'No issues reported',
+        additional: feedback.additional || 'No additional comments',
+        timestamp: feedback.timestamp,
+        version: feedback.version,
+        user_name: feedback.clientProfile?.name || 'Anonymous',
+        user_email: feedback.clientProfile?.email || 'Not provided'
+      }
+    };
+
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    const responseText = await response.text();
+    console.log('Response status:', response.status);
+    console.log('Response text:', responseText);
+
+    if (!response.ok) {
+      throw new Error(`Failed to send feedback email: ${response.status} ${responseText}`);
+    }
+
+    console.log('Feedback sent successfully');
+    return true;
+  } catch (error) {
+    console.error('Error sending feedback:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack
+    });
+    throw new Error(`Failed to send feedback email: ${error.message}`);
+  }
+}
+
+async function getFeedback() {
+  try {
+    const result = await chrome.storage.local.get('userFeedback');
+    return result.userFeedback || [];
+  } catch (error) {
+    console.error('Error getting feedback:', error);
+    return [];
+  }
+}

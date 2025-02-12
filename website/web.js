@@ -302,6 +302,9 @@ async function loadSettings() {
             });
         });
     });
+
+    // Add feedback button event listener
+    document.getElementById('openFeedbackBtn').addEventListener('click', showFeedbackDialog);
 }
 
 async function loadProfiles() {
@@ -1128,4 +1131,151 @@ async function typeText(element, text) {
         // Scroll while typing
         element.parentElement.parentElement.scrollTop = element.parentElement.parentElement.scrollHeight;
     }
+}
+
+function showFeedbackDialog() {
+    const dialog = document.createElement('div');
+    dialog.className = 'feedback-dialog';
+    
+    dialog.innerHTML = `
+        <h2><i class="fas fa-comment-dots"></i> Share Your Feedback</h2>
+        <div class="feedback-form">
+            <div class="template-dialog-field">
+                <label>How satisfied are you with NetLinked? <span style="color: var(--primary-color)">*</span></label>
+                <div class="rating-container">
+                    <div class="star-rating">
+                        ${Array(5).fill(0).map((_, i) => `
+                            <span class="star" data-rating="${i + 1}">
+                                <i class="far fa-star"></i>
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="template-dialog-field">
+                <label>Which features do you find most useful? <span style="color: var(--primary-color)">*</span></label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" value="profile-analysis"> Profile Analysis</label>
+                    <label><input type="checkbox" value="message-generation"> Message Generation</label>
+                    <label><input type="checkbox" value="templates"> Message Templates</label>
+                    <label><input type="checkbox" value="chat"> AI Chat</label>
+                </div>
+            </div>
+            
+            <div class="template-dialog-field">
+                <label>What could be improved?</label>
+                <textarea id="improvementsFeedback" placeholder="Share your suggestions for improvements..."></textarea>
+            </div>
+            
+            <div class="template-dialog-field">
+                <label>Did you encounter any issues?</label>
+                <textarea id="issuesFeedback" placeholder="Describe any problems you experienced..."></textarea>
+            </div>
+            
+            <div class="template-dialog-field">
+                <label>Additional comments</label>
+                <textarea id="additionalFeedback" placeholder="Any other thoughts or suggestions..."></textarea>
+            </div>
+            
+            <div class="template-dialog-actions">
+                <button id="cancelFeedbackBtn" class="secondary-button">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button id="submitFeedbackBtn" class="primary-button">
+                    <i class="fas fa-paper-plane"></i> Send Feedback
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(dialog);
+
+    // Add star rating functionality
+    const stars = dialog.querySelectorAll('.star');
+    let currentRating = 0;
+
+    stars.forEach(star => {
+        star.addEventListener('mouseover', function() {
+            const rating = this.dataset.rating;
+            updateStars(stars, rating);
+        });
+
+        star.addEventListener('mouseout', function() {
+            updateStars(stars, currentRating);
+        });
+
+        star.addEventListener('click', function() {
+            currentRating = this.dataset.rating;
+            updateStars(stars, currentRating);
+        });
+    });
+
+    // Add event listeners for buttons
+    dialog.querySelector('#cancelFeedbackBtn').addEventListener('click', () => {
+        dialog.remove();
+    });
+
+    dialog.querySelector('#submitFeedbackBtn').addEventListener('click', async () => {
+        // Validate required fields
+        if (!currentRating) {
+            showErrorMessage('Please provide a rating');
+            return;
+        }
+
+        const selectedFeatures = Array.from(dialog.querySelectorAll('.checkbox-group input:checked'))
+            .map(cb => cb.value);
+            
+        if (selectedFeatures.length === 0) {
+            showErrorMessage('Please select at least one feature');
+            return;
+        }
+
+        const feedback = {
+            rating: currentRating,
+            features: selectedFeatures,
+            improvements: dialog.querySelector('#improvementsFeedback').value,
+            issues: dialog.querySelector('#issuesFeedback').value,
+            additional: dialog.querySelector('#additionalFeedback').value,
+            timestamp: new Date().toISOString(),
+            version: '1.0.0-beta',
+            clientProfile: await getClientProfile()
+        };
+
+        try {
+            await saveFeedback(feedback);
+            dialog.remove();
+            showSuccessMessage('Thank you for your feedback!');
+        } catch (error) {
+            console.error('Error saving feedback:', error);
+            showErrorMessage('Failed to submit feedback. Please try again.');
+        }
+    });
+}
+
+function updateStars(stars, rating) {
+    stars.forEach((star, index) => {
+        const starIcon = star.querySelector('i');
+        if (index < rating) {
+            starIcon.className = 'fas fa-star';
+        } else {
+            starIcon.className = 'far fa-star';
+        }
+    });
+}
+
+function showSuccessMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'success-message';
+    messageDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+    document.body.appendChild(messageDiv);
+    setTimeout(() => messageDiv.remove(), 3000);
+}
+
+function showErrorMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'error-message';
+    messageDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+    document.body.appendChild(messageDiv);
+    setTimeout(() => messageDiv.remove(), 3000);
 }

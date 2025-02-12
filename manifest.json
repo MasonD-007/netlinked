@@ -9,9 +9,12 @@
 		"default_icon": "netlinked.png"
 	},
 	"permissions": ["activeTab", "scripting", "storage", "webRequest"],
-	"host_permissions": ["https://*.linkedin.com/*"],
+	"host_permissions": [
+		"https://*.linkedin.com/*",
+		"https://api.emailjs.com/*"
+	],
 	"content_security_policy": {
-		"extension_pages": "script-src 'self'; object-src 'self'"
+		"extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://api.emailjs.com https://generativelanguage.googleapis.com;"
 	},
 	"background": {
 		"service_worker": "background.js",

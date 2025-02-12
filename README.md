@@ -1,6 +1,6 @@
 # NetLinked
 
-A Chrome extension that helps you create personalized LinkedIn connection requests using AI.
+A Chrome extension for generating personalized LinkedIn connection messages using AI.
 
 ## What is this?
 NetLinked is a tool that helps you connect with people on LinkedIn by generating thoughtful, personalized introduction messages. It leverages the Gemini API to analyze profiles and create relevant connection requests that stand out.
@@ -11,6 +11,7 @@ NetLinked is a tool that helps you connect with people on LinkedIn by generating
 - ✏️ Easy message customization
 - 🔒 Secure and privacy-focused
 - ⚡ Quick and seamless integration with LinkedIn
+- 📝 Built-in feedback system (sends feedback directly to the project maintainer)
 
 ## How does it work?
 1. The extension automatically extracts key information from LinkedIn profiles
@@ -34,19 +35,24 @@ NetLinked is a tool that helps you connect with people on LinkedIn by generating
 4. Click "Load unpacked"
 5. Select the "netlinked" folder from your cloned repository
 
-## Configuration
-1. Right-click the extension icon in Chrome
-2. Select "Options" or "Settings"
-3. Enter your Gemini API key
-4. Save your settings
+## How it Works
+1. The extension automatically extracts key information from LinkedIn profiles
+2. Using the Gemini API, it generates a personalized introduction message
+3. You receive a draft message for review
+4. Edit and customize the message as needed before sending
+5. Send your connection request with confidence
 
 ## Privacy & Security
 - All data is processed locally on your machine
 - API keys are stored securely in Chrome's extension storage
+- Feedback is sent directly to the project maintainer
 - No personal information is collected or stored
 
-## License
-[GNU General Public License v3.0](LICENSE)
+## Feedback
+The extension includes a built-in feedback system that sends your feedback directly to the project maintainer. This helps us improve the extension and fix any issues you encounter.
 
 ## Support
 If you encounter any issues or have questions, please [open an issue](https://github.com/masond-007/netlinked/issues).
+
+## License
+[GNU General Public License v3.0](LICENSE)

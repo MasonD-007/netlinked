@@ -32,18 +32,20 @@ NetLinked is a tool that helps you connect with people on LinkedIn by generating
 3. Enable "Developer mode" in the top-right corner
 4. Click "Load unpacked"
 5. Select the "netlinked" folder from your cloned repository
-6. Follow the setup wizard to configure your API keys
 
 ## Configuration
 1. Right-click the extension icon in Chrome
 2. Select "Options" or "Settings"
-3. Enter your Gemini API key and LinkedIn API key
+3. Enter your Gemini API key
 4. Save your settings
 
 ## Privacy & Security
 - All data is processed locally on your machine
 - API keys are stored securely in Chrome's extension storage
 - No personal information is collected or stored
+
+## License
+[GNU General Public License v3.0](LICENSE)
 
 ## Support
 If you encounter any issues or have questions, please [open an issue](https://github.com/masond-007/netlinked/issues).

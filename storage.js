@@ -367,3 +367,37 @@ async function getSpecificTemplate(templateId) {
     return null;
   }
 }
+
+// Chat conversation history functions
+async function saveChatHistory(profileId, history) {
+  try {
+    const key = `chat_history_${profileId}`;
+    await chrome.storage.local.set({ [key]: history });
+    return true;
+  } catch (error) {
+    console.error('Error saving chat history:', error);
+    return false;
+  }
+}
+
+async function getChatHistory(profileId) {
+  try {
+    const key = `chat_history_${profileId}`;
+    const result = await chrome.storage.local.get(key);
+    return result[key] || [];
+  } catch (error) {
+    console.error('Error getting chat history:', error);
+    return [];
+  }
+}
+
+async function clearChatHistory(profileId) {
+  try {
+    const key = `chat_history_${profileId}`;
+    await chrome.storage.local.remove(key);
+    return true;
+  } catch (error) {
+    console.error('Error clearing chat history:', error);
+    return false;
+  }
+}

@@ -26,6 +26,7 @@ NetLinked is a tool that helps you connect with people on LinkedIn by generating
 ## Installation
 1. Clone this repository:
    ```bash
+   cd Downloads
    git clone https://github.com/masond-007/netlinked.git
    ```
 2. Open Chrome and navigate to `chrome://extensions/`

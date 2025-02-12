@@ -862,6 +862,15 @@ async function loadChatProfiles() {
 
     // Initialize chat UI
     await initializeChat();
+
+    // Add profile select change handler to clear conversation when profile changes
+    select.addEventListener('change', async () => {
+        if (select.value) {
+            await clearChatHistory(select.value);
+        }
+        chatMessages.innerHTML = '';
+        initializeChat();
+    });
 }
 
 async function initializeChat() {
@@ -873,24 +882,50 @@ async function initializeChat() {
     // Clear existing messages
     chatMessages.innerHTML = '';
 
-    // Add welcome message
-    const welcomeMessage = document.createElement('div');
-    welcomeMessage.className = 'chat-message ai';
-    const welcomeContentDiv = document.createElement('div');
-    welcomeContentDiv.className = 'chat-message-content typing-animation';
-    welcomeMessage.appendChild(welcomeContentDiv);
-    chatMessages.appendChild(welcomeMessage);
+    // Load existing chat history if a profile is selected
+    if (profileSelect.value) {
+        const history = await getChatHistory(profileSelect.value);
+        
+        // Display existing messages
+        for (const msg of history) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${msg.role === 'user' ? 'user' : 'ai'}`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'chat-message-content visible';
+            contentDiv.textContent = msg.content;
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+        }
+    }
 
-    // Type out welcome message
-    const welcomeText = `Hello! Select a profile from the dropdown and ask me anything about them. I can help you:
+    // Add welcome message if no history exists
+    if (chatMessages.children.length === 0) {
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.className = 'chat-message ai';
+        const welcomeContentDiv = document.createElement('div');
+        welcomeContentDiv.className = 'chat-message-content typing-animation';
+        welcomeMessage.appendChild(welcomeContentDiv);
+        chatMessages.appendChild(welcomeMessage);
+
+        // Type out welcome message
+        const welcomeText = `Hello! Select a profile from the dropdown and ask me anything about them. I can help you:
 
 - Analyze their background and experience
 - Compare their skills with yours
 - Suggest talking points for conversations
 - Identify potential collaboration opportunities`;
 
-    await typeText(welcomeContentDiv, welcomeText);
-    welcomeContentDiv.classList.remove('typing-animation');
+        await typeText(welcomeContentDiv, welcomeText);
+        welcomeContentDiv.classList.remove('typing-animation');
+
+        // Save welcome message to history if a profile is selected
+        if (profileSelect.value) {
+            await saveChatHistory(profileSelect.value, [{
+                role: 'assistant',
+                content: welcomeText
+            }]);
+        }
+    }
 
     // Handle send button click
     sendButton.onclick = () => sendChatMessage();
@@ -921,6 +956,9 @@ async function sendChatMessage() {
         return;
     }
 
+    // Get existing chat history
+    const history = await getChatHistory(profileSelect.value);
+
     // Add user message
     const userMessageDiv = document.createElement('div');
     userMessageDiv.className = 'chat-message user';
@@ -928,6 +966,12 @@ async function sendChatMessage() {
         <div class="chat-message-content visible">${message}</div>
     `;
     chatMessages.appendChild(userMessageDiv);
+
+    // Add user message to history
+    history.push({
+        role: 'user',
+        content: message
+    });
 
     // Clear input
     chatInput.value = '';
@@ -950,8 +994,8 @@ async function sendChatMessage() {
             throw new Error('Please set up your Gemini API key in the Settings tab first.');
         }
 
-        // Call Gemini API
-        const response = await callGeminiChat(message, selectedProfile, clientProfile, apiKey);
+        // Call Gemini API with conversation history
+        const response = await callGeminiChat(message, selectedProfile, clientProfile, apiKey, history);
 
         // Remove loading indicator
         loadingDiv.remove();
@@ -966,6 +1010,15 @@ async function sendChatMessage() {
 
         // Animate the text
         await typeText(contentDiv, response);
+
+        // Add AI response to history
+        history.push({
+            role: 'assistant',
+            content: response
+        });
+
+        // Save updated history
+        await saveChatHistory(profileSelect.value, history);
 
         // Remove typing animation class after text is complete
         contentDiv.classList.remove('typing-animation');
@@ -984,30 +1037,14 @@ async function sendChatMessage() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Add new typewriter function
-async function typeText(element, text) {
-    element.textContent = '';
-    element.classList.add('visible');
-    
-    const words = text.split(' ');
-    let currentText = '';
-    
-    for (let i = 0; i < words.length; i++) {
-        currentText += words[i] + ' ';
-        element.textContent = currentText;
-        
-        // Adjust the delay based on punctuation
-        const delay = words[i].match(/[.!?]$/) ? 150 : 50;
-        await new Promise(resolve => setTimeout(resolve, delay));
-        
-        // Scroll while typing
-        element.parentElement.parentElement.scrollTop = element.parentElement.parentElement.scrollHeight;
-    }
-}
+async function callGeminiChat(message, selectedProfile, clientProfile, apiKey, history) {
+    // Format the conversation history for the prompt
+    const formattedHistory = history
+        .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+        .join('\n\n');
 
-async function callGeminiChat(message, selectedProfile, clientProfile, apiKey) {
     const prompt = `
-    You are a helpful AI assistant analyzing LinkedIn profiles. You have access to two profiles:
+    You are a helpful AI assistant analyzing LinkedIn profiles. You have access to two profiles and the conversation history below.
 
     1. The client's (sender's) profile:
     - Name: ${clientProfile.name}
@@ -1024,14 +1061,18 @@ async function callGeminiChat(message, selectedProfile, clientProfile, apiKey) {
     - Experience: ${JSON.stringify(selectedProfile.experience)}
     - Skills: ${selectedProfile.skills ? selectedProfile.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
-    The user's question is: "${message}"
+    Previous conversation:
+    ${formattedHistory}
+
+    The user's latest question is: "${message}"
 
     Please provide a helpful, professional response that:
-    1. Directly answers the user's question
-    2. References specific details from both profiles when relevant
-    3. Maintains a friendly, professional tone
-    4. Uses bullet points or formatting when it helps clarity
-    5. Keeps responses concise but informative
+    1. Maintains context from the previous conversation
+    2. Directly answers the user's question
+    3. References specific details from both profiles when relevant
+    4. Maintains a friendly, professional tone
+    5. Uses bullet points or formatting when it helps clarity
+    6. Keeps responses concise but informative
 
     Format your response in a way that's easy to read and understand.`;
 
@@ -1065,5 +1106,26 @@ async function callGeminiChat(message, selectedProfile, clientProfile, apiKey) {
     } catch (error) {
         console.error("Error in callGeminiChat:", error);
         throw new Error(`Failed to generate response: ${error.message}`);
+    }
+}
+
+// Add typewriter function
+async function typeText(element, text) {
+    element.textContent = '';
+    element.classList.add('visible');
+    
+    const words = text.split(' ');
+    let currentText = '';
+    
+    for (let i = 0; i < words.length; i++) {
+        currentText += words[i] + ' ';
+        element.textContent = currentText;
+        
+        // Adjust the delay based on punctuation
+        const delay = words[i].match(/[.!?]$/) ? 150 : 50;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        // Scroll while typing
+        element.parentElement.parentElement.scrollTop = element.parentElement.parentElement.scrollHeight;
     }
 }

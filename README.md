@@ -37,7 +37,7 @@ NetLinked is a tool that helps you connect with people on LinkedIn by generating
 ## Configuration
 1. Right-click the extension icon in Chrome
 2. Select "Options" or "Settings"
-3. Enter your Gemini API key and LinkedIn API key
+3. Enter your Gemini API key
 4. Save your settings
 
 ## Privacy & Security

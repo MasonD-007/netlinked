@@ -1,21 +1,49 @@
+# NetLinked
+
+A Chrome extension that helps you create personalized LinkedIn connection requests using AI.
+
 ## What is this?
-This is a tool that helps you connect with people on LinkedIn. It uses the Gemini API to generate a draft of an introduction message for a LinkedIn connection request.
+NetLinked is a tool that helps you connect with people on LinkedIn by generating thoughtful, personalized introduction messages. It leverages the Gemini API to analyze profiles and create relevant connection requests that stand out.
+
+## Features
+- 🤖 AI-powered message generation
+- 👤 Automatic profile information extraction
+- ✏️ Easy message customization
+- 🔒 Secure and privacy-focused
+- ⚡ Quick and seamless integration with LinkedIn
 
 ## How does it work?
-1. The tool extracts important information from the LinkedIn profile
-2. The tool uses the Gemini API to generate a draft of an introduction message for a LinkedIn connection request
-3. The tool sends the draft to the user
-4. The user can then edit the draft before sending it
+1. The extension automatically extracts key information from LinkedIn profiles
+2. Using the Gemini API, it generates a personalized introduction message
+3. You receive a draft message for review
+4. Edit and customize the message as needed before sending
+5. Send your connection request with confidence
 
-
-## Dependencies
-- Chrome
-- Gemini API key
+## Requirements
+- Google Chrome browser
+- Gemini API key (Get it [here](https://makersuite.google.com/app/apikey))
 
 ## Installation
-1. Clone the repository
-2. Turn on developer mode in Chrome
-3. Open the extension settings page
-4. Click on "Load unpacked"
-5. Select the "netlinked" folder
-6. Go through the setup process in the website
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/masond-007/netlinked.git
+   ```
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" in the top-right corner
+4. Click "Load unpacked"
+5. Select the "netlinked" folder from your cloned repository
+6. Follow the setup wizard to configure your API keys
+
+## Configuration
+1. Right-click the extension icon in Chrome
+2. Select "Options" or "Settings"
+3. Enter your Gemini API key and LinkedIn API key
+4. Save your settings
+
+## Privacy & Security
+- All data is processed locally on your machine
+- API keys are stored securely in Chrome's extension storage
+- No personal information is collected or stored
+
+## Support
+If you encounter any issues or have questions, please [open an issue](https://github.com/masond-007/netlinked/issues).

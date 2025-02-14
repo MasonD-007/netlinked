@@ -513,3 +513,29 @@ button:hover i {
   position: absolute;
   left: -15px;
 }
+
+/* Regenerate button styles */
+.regenerate-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.regenerate-button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.regenerate-button i {
+  font-size: 14px;
+}

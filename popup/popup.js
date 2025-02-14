@@ -497,109 +497,7 @@ document.getElementById('generateButton').addEventListener('click', async () => 
   document.getElementById('loadingPopup').classList.remove('hidden');
   
   try {
-    // Get current tab first
-    const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!currentTab) {
-      throw new Error("No active tab found");
-    }
-
-    // If we don't have profile data yet, scrape it first
-    if (!currentProfileData) {
-      const scrapedData = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ tabId: currentTab.id, action: "scrapeProfile" }, (response) => {
-          if (!response || !response.success) {
-            reject(new Error("Failed to scrape profile data"));
-          } else {
-            resolve(response.profileData);
-          }
-        });
-      });
-      currentProfileData = scrapedData;
-    }
-
-    // Get client profile data
-    const clientProfile = await getClientProfile();
-    if (!clientProfile) {
-      throw new Error('Please save your profile first to enable message generation.');
-    }
-
-    // Get API key
-    const apiKey = await getAIApiKey(selectedApi);
-    if (!apiKey) {
-      throw new Error(`${selectedApi} API key not found. Please add your API key in settings.`);
-    }
-
-    let message;
-    if (templateSource === 'template') {
-      const templateId = document.getElementById('userTemplateSelect').value;
-      if (!templateId) {
-        throw new Error('Please select a template');
-      }
-      
-      // Get template
-      const template = await getSpecificTemplate(templateId);
-      if (!template) {
-        throw new Error('Template not found');
-      }
-      
-      // First process template with basic replacements
-      const processedTemplate = await processTemplate(template.content, clientProfile, currentProfileData);
-      
-      // Then enhance with AI
-      const response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          action: "generateMessage",
-          ClientData: clientProfile,
-          RecipientData: currentProfileData,
-          template: { ...template, content: processedTemplate },
-          apiKey: apiKey
-        }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else if (!response.success) {
-            reject(new Error(response.error || 'Failed to generate message'));
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      
-      message = response.message;
-    } else {
-      // Generate message using AI directly
-      const response = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({
-          action: "generateMessage",
-          ClientData: clientProfile,
-          RecipientData: currentProfileData,
-          template: messageType,
-          apiKey: apiKey
-        }, (response) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else if (!response.success) {
-            reject(new Error(response.error || 'Failed to generate message'));
-          } else {
-            resolve(response);
-          }
-        });
-      });
-      
-      message = response.message;
-    }
-
-    if (!message) {
-      throw new Error('No message was generated');
-    }
-
-    // Save the generated message
-    await saveGeneratedMessage(message, currentProfileData, messageType);
-
-    // Display the generated message
-    document.getElementById('message').textContent = message;
-    document.getElementById('messageContainer').classList.remove('hidden');
-    document.getElementById('messageOptions').classList.add('hidden');
-    
+    await generateMessage(selectedApi, messageType, templateSource);
   } catch (error) {
     console.error('Error generating message:', error);
     alert(error.message || 'Failed to generate message. Please try again.');
@@ -607,3 +505,128 @@ document.getElementById('generateButton').addEventListener('click', async () => 
     document.getElementById('loadingPopup').classList.add('hidden');
   }
 });
+
+// Add regenerate button handler
+document.getElementById('regenerateButton').addEventListener('click', async () => {
+  const selectedApi = document.querySelector('input[name="aiApi"]:checked').value;
+  const messageType = document.querySelector('input[name="messageType"]:checked').value;
+  const templateSource = document.querySelector('input[name="templateSource"]:checked').value;
+
+  // Show loading state
+  document.getElementById('loadingPopup').classList.remove('hidden');
+  
+  try {
+    await generateMessage(selectedApi, messageType, templateSource);
+  } catch (error) {
+    console.error('Error regenerating message:', error);
+    alert(error.message || 'Failed to regenerate message. Please try again.');
+  } finally {
+    document.getElementById('loadingPopup').classList.add('hidden');
+  }
+});
+
+// Extract the message generation logic into a reusable function
+async function generateMessage(selectedApi, messageType, templateSource) {
+  // Get current tab first
+  const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!currentTab) {
+    throw new Error("No active tab found");
+  }
+
+  // If we don't have profile data yet, scrape it first
+  if (!currentProfileData) {
+    const scrapedData = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ tabId: currentTab.id, action: "scrapeProfile" }, (response) => {
+        if (!response || !response.success) {
+          reject(new Error("Failed to scrape profile data"));
+        } else {
+          resolve(response.profileData);
+        }
+      });
+    });
+    currentProfileData = scrapedData;
+  }
+
+  // Get client profile data
+  const clientProfile = await getClientProfile();
+  if (!clientProfile) {
+    throw new Error('Please save your profile first to enable message generation.');
+  }
+
+  // Get API key
+  const apiKey = await getAIApiKey(selectedApi);
+  if (!apiKey) {
+    throw new Error(`${selectedApi} API key not found. Please add your API key in settings.`);
+  }
+
+  let message;
+  if (templateSource === 'template') {
+    const templateId = document.getElementById('userTemplateSelect').value;
+    if (!templateId) {
+      throw new Error('Please select a template');
+    }
+    
+    // Get template
+    const template = await getSpecificTemplate(templateId);
+    if (!template) {
+      throw new Error('Template not found');
+    }
+    
+    // First process template with basic replacements
+    const processedTemplate = await processTemplate(template.content, clientProfile, currentProfileData);
+    
+    // Then enhance with AI
+    const response = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: "generateMessage",
+        ClientData: clientProfile,
+        RecipientData: currentProfileData,
+        template: { ...template, content: processedTemplate },
+        apiKey: apiKey
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (!response.success) {
+          reject(new Error(response.error || 'Failed to generate message'));
+        } else {
+          resolve(response);
+        }
+      });
+    });
+    
+    message = response.message;
+  } else {
+    // Generate message using AI directly
+    const response = await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: "generateMessage",
+        ClientData: clientProfile,
+        RecipientData: currentProfileData,
+        template: messageType,
+        apiKey: apiKey
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (!response.success) {
+          reject(new Error(response.error || 'Failed to generate message'));
+        } else {
+          resolve(response);
+        }
+      });
+    });
+    
+    message = response.message;
+  }
+
+  if (!message) {
+    throw new Error('No message was generated');
+  }
+
+  // Save the generated message
+  await saveGeneratedMessage(message, currentProfileData, messageType);
+
+  // Display the generated message
+  document.getElementById('message').textContent = message;
+  document.getElementById('messageContainer').classList.remove('hidden');
+  document.getElementById('messageOptions').classList.add('hidden');
+}

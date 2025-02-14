@@ -8,7 +8,13 @@
 		"default_title": "NetLinked",
 		"default_icon": "netlinked.png"
 	},
-	"permissions": ["activeTab", "scripting", "storage", "webRequest"],
+	"permissions": [
+		"activeTab",
+		"scripting",
+		"storage",
+		"webRequest",
+		"clipboardWrite"
+	],
 	"host_permissions": [
 		"https://*.linkedin.com/*",
 		"https://api.emailjs.com/*"

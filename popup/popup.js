@@ -1,5 +1,6 @@
 // Add at the beginning of the file
 let currentProfileData = null;
+let isEditing = false;
 
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
@@ -497,18 +498,49 @@ document.getElementById('generateButton').addEventListener('click', async () => 
   document.getElementById('loadingPopup').classList.remove('hidden');
   
   try {
-    // Get current tab first
-    const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!currentTab) {
-      throw new Error("No active tab found");
-    }
+    await generateMessage(selectedApi, messageType, templateSource);
+  } catch (error) {
+    console.error('Error generating message:', error);
+    alert(error.message || 'Failed to generate message. Please try again.');
+  } finally {
+    document.getElementById('loadingPopup').classList.add('hidden');
+  }
+});
 
+// Add regenerate button handler
+document.getElementById('regenerateButton').addEventListener('click', async () => {
+  const selectedApi = document.querySelector('input[name="aiApi"]:checked').value;
+  const messageType = document.querySelector('input[name="messageType"]:checked').value;
+  const templateSource = document.querySelector('input[name="templateSource"]:checked').value;
+
+  // Show loading state
+  document.getElementById('loadingPopup').classList.remove('hidden');
+  
+  try {
+    await generateMessage(selectedApi, messageType, templateSource);
+  } catch (error) {
+    console.error('Error regenerating message:', error);
+    alert(error.message || 'Failed to regenerate message. Please try again.');
+  } finally {
+    document.getElementById('loadingPopup').classList.add('hidden');
+  }
+});
+
+// Extract the message generation logic into a reusable function
+async function generateMessage(selectedApi, messageType, templateSource) {
+  // Get current tab first
+  const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!currentTab) {
+    throw new Error("No active tab found");
+  }
+
+  try {
     // If we don't have profile data yet, scrape it first
     if (!currentProfileData) {
       const scrapedData = await new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ tabId: currentTab.id, action: "scrapeProfile" }, (response) => {
           if (!response || !response.success) {
-            reject(new Error("Failed to scrape profile data"));
+            reject(new Error("Failed to scrape profile data. Please make sure you're on a LinkedIn profile page."));
           } else {
             resolve(response.profileData);
           }
@@ -557,7 +589,19 @@ document.getElementById('generateButton').addEventListener('click', async () => 
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
           } else if (!response.success) {
-            reject(new Error(response.error || 'Failed to generate message'));
+            let errorMessage = 'Failed to generate message';
+            if (response.error) {
+              if (response.error.includes('503')) {
+                errorMessage = 'The AI service is temporarily unavailable. Please try again in a few moments.';
+              } else if (response.error.includes('429')) {
+                errorMessage = 'You have exceeded the rate limit. Please wait a moment before trying again.';
+              } else if (response.error.includes('401')) {
+                errorMessage = 'Invalid API key. Please check your API key in settings.';
+              } else {
+                errorMessage = `Error: ${response.error}`;
+              }
+            }
+            reject(new Error(errorMessage));
           } else {
             resolve(response);
           }
@@ -578,7 +622,19 @@ document.getElementById('generateButton').addEventListener('click', async () => 
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
           } else if (!response.success) {
-            reject(new Error(response.error || 'Failed to generate message'));
+            let errorMessage = 'Failed to generate message';
+            if (response.error) {
+              if (response.error.includes('503')) {
+                errorMessage = 'The AI service is temporarily unavailable. Please try again in a few moments.';
+              } else if (response.error.includes('429')) {
+                errorMessage = 'You have exceeded the rate limit. Please wait a moment before trying again.';
+              } else if (response.error.includes('401')) {
+                errorMessage = 'Invalid API key. Please check your API key in settings.';
+              } else {
+                errorMessage = `Error: ${response.error}`;
+              }
+            }
+            reject(new Error(errorMessage));
           } else {
             resolve(response);
           }
@@ -589,7 +645,7 @@ document.getElementById('generateButton').addEventListener('click', async () => 
     }
 
     if (!message) {
-      throw new Error('No message was generated');
+      throw new Error('No message was generated. Please try again.');
     }
 
     // Save the generated message
@@ -600,10 +656,95 @@ document.getElementById('generateButton').addEventListener('click', async () => 
     document.getElementById('messageContainer').classList.remove('hidden');
     document.getElementById('messageOptions').classList.add('hidden');
     
+    // Reset edit state when generating new message
+    isEditing = false;
+    document.getElementById('messageEdit').classList.add('hidden');
+    document.getElementById('message').classList.remove('hidden');
+    document.getElementById('editButton').classList.remove('hidden');
+    document.getElementById('saveEditButton').classList.add('hidden');
   } catch (error) {
-    console.error('Error generating message:', error);
-    alert(error.message || 'Failed to generate message. Please try again.');
-  } finally {
-    document.getElementById('loadingPopup').classList.add('hidden');
+    console.error('Error in generateMessage:', error);
+    throw error; // Re-throw to be handled by the caller
+  }
+}
+
+// Add copy button handler
+document.getElementById('copyButton').addEventListener('click', async () => {
+  const messageText = isEditing 
+    ? document.getElementById('messageEdit').value 
+    : document.getElementById('message').textContent;
+  
+  try {
+    await navigator.clipboard.writeText(messageText);
+    
+    // Visual feedback
+    const copyButton = document.getElementById('copyButton');
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    
+    // Reset button text after 2 seconds
+    setTimeout(() => {
+      copyButton.innerHTML = originalText;
+    }, 2000);
+  } catch (error) {
+    console.error('Failed to copy message:', error);
+    alert('Failed to copy message to clipboard');
+  }
+});
+
+// Add edit button handler
+document.getElementById('editButton').addEventListener('click', () => {
+  const messageElement = document.getElementById('message');
+  const editElement = document.getElementById('messageEdit');
+  const editButton = document.getElementById('editButton');
+  const saveEditButton = document.getElementById('saveEditButton');
+  
+  // Switch to edit mode
+  isEditing = true;
+  
+  // Copy text to textarea
+  editElement.value = messageElement.textContent;
+  
+  // Show/hide elements
+  messageElement.classList.add('hidden');
+  editElement.classList.remove('hidden');
+  editButton.classList.add('hidden');
+  saveEditButton.classList.remove('hidden');
+  
+  // Focus textarea
+  editElement.focus();
+});
+
+// Add save edit button handler
+document.getElementById('saveEditButton').addEventListener('click', async () => {
+  const messageElement = document.getElementById('message');
+  const editElement = document.getElementById('messageEdit');
+  const editButton = document.getElementById('editButton');
+  const saveEditButton = document.getElementById('saveEditButton');
+  
+  // Get edited text
+  const editedMessage = editElement.value.trim();
+  
+  if (!editedMessage) {
+    alert('Message cannot be empty');
+    return;
+  }
+  
+  try {
+    // Save the edited message
+    await saveGeneratedMessage(editedMessage, currentProfileData, document.querySelector('input[name="messageType"]:checked').value);
+    
+    // Update display
+    messageElement.textContent = editedMessage;
+    
+    // Switch back to view mode
+    isEditing = false;
+    messageElement.classList.remove('hidden');
+    editElement.classList.add('hidden');
+    editButton.classList.remove('hidden');
+    saveEditButton.classList.add('hidden');
+  } catch (error) {
+    console.error('Error saving edited message:', error);
+    alert('Failed to save edited message');
   }
 });

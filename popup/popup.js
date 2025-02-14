@@ -630,3 +630,25 @@ async function generateMessage(selectedApi, messageType, templateSource) {
   document.getElementById('messageContainer').classList.remove('hidden');
   document.getElementById('messageOptions').classList.add('hidden');
 }
+
+// Add copy button handler
+document.getElementById('copyButton').addEventListener('click', async () => {
+  const messageText = document.getElementById('message').textContent;
+  
+  try {
+    await navigator.clipboard.writeText(messageText);
+    
+    // Visual feedback
+    const copyButton = document.getElementById('copyButton');
+    const originalText = copyButton.innerHTML;
+    copyButton.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+    
+    // Reset button text after 2 seconds
+    setTimeout(() => {
+      copyButton.innerHTML = originalText;
+    }, 2000);
+  } catch (error) {
+    console.error('Failed to copy message:', error);
+    alert('Failed to copy message to clipboard');
+  }
+});

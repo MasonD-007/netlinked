@@ -539,3 +539,41 @@ button:hover i {
 .regenerate-button i {
   font-size: 14px;
 }
+
+/* Message actions container */
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* Copy button styles */
+.copy-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+  transition: background-color 0.2s ease;
+}
+
+.copy-button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.copy-button i {
+  font-size: 14px;
+}
+
+/* Update regenerate button to use flex: 1 */
+.regenerate-button {
+  flex: 1;
+  margin-top: 0; /* Remove margin since it's handled by message-actions */
+}

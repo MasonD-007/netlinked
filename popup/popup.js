@@ -1,5 +1,6 @@
 // Add at the beginning of the file
 let currentProfileData = null;
+let isEditing = false;
 
 // Add a function to check LinkedIn profile URL pattern
 function isLinkedInProfilePage(url) {
@@ -533,107 +534,145 @@ async function generateMessage(selectedApi, messageType, templateSource) {
     throw new Error("No active tab found");
   }
 
-  // If we don't have profile data yet, scrape it first
-  if (!currentProfileData) {
-    const scrapedData = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({ tabId: currentTab.id, action: "scrapeProfile" }, (response) => {
-        if (!response || !response.success) {
-          reject(new Error("Failed to scrape profile data"));
-        } else {
-          resolve(response.profileData);
-        }
+  try {
+    // If we don't have profile data yet, scrape it first
+    if (!currentProfileData) {
+      const scrapedData = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ tabId: currentTab.id, action: "scrapeProfile" }, (response) => {
+          if (!response || !response.success) {
+            reject(new Error("Failed to scrape profile data. Please make sure you're on a LinkedIn profile page."));
+          } else {
+            resolve(response.profileData);
+          }
+        });
       });
-    });
-    currentProfileData = scrapedData;
-  }
-
-  // Get client profile data
-  const clientProfile = await getClientProfile();
-  if (!clientProfile) {
-    throw new Error('Please save your profile first to enable message generation.');
-  }
-
-  // Get API key
-  const apiKey = await getAIApiKey(selectedApi);
-  if (!apiKey) {
-    throw new Error(`${selectedApi} API key not found. Please add your API key in settings.`);
-  }
-
-  let message;
-  if (templateSource === 'template') {
-    const templateId = document.getElementById('userTemplateSelect').value;
-    if (!templateId) {
-      throw new Error('Please select a template');
+      currentProfileData = scrapedData;
     }
-    
-    // Get template
-    const template = await getSpecificTemplate(templateId);
-    if (!template) {
-      throw new Error('Template not found');
+
+    // Get client profile data
+    const clientProfile = await getClientProfile();
+    if (!clientProfile) {
+      throw new Error('Please save your profile first to enable message generation.');
     }
-    
-    // First process template with basic replacements
-    const processedTemplate = await processTemplate(template.content, clientProfile, currentProfileData);
-    
-    // Then enhance with AI
-    const response = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({
-        action: "generateMessage",
-        ClientData: clientProfile,
-        RecipientData: currentProfileData,
-        template: { ...template, content: processedTemplate },
-        apiKey: apiKey
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else if (!response.success) {
-          reject(new Error(response.error || 'Failed to generate message'));
-        } else {
-          resolve(response);
-        }
+
+    // Get API key
+    const apiKey = await getAIApiKey(selectedApi);
+    if (!apiKey) {
+      throw new Error(`${selectedApi} API key not found. Please add your API key in settings.`);
+    }
+
+    let message;
+    if (templateSource === 'template') {
+      const templateId = document.getElementById('userTemplateSelect').value;
+      if (!templateId) {
+        throw new Error('Please select a template');
+      }
+      
+      // Get template
+      const template = await getSpecificTemplate(templateId);
+      if (!template) {
+        throw new Error('Template not found');
+      }
+      
+      // First process template with basic replacements
+      const processedTemplate = await processTemplate(template.content, clientProfile, currentProfileData);
+      
+      // Then enhance with AI
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          action: "generateMessage",
+          ClientData: clientProfile,
+          RecipientData: currentProfileData,
+          template: { ...template, content: processedTemplate },
+          apiKey: apiKey
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (!response.success) {
+            let errorMessage = 'Failed to generate message';
+            if (response.error) {
+              if (response.error.includes('503')) {
+                errorMessage = 'The AI service is temporarily unavailable. Please try again in a few moments.';
+              } else if (response.error.includes('429')) {
+                errorMessage = 'You have exceeded the rate limit. Please wait a moment before trying again.';
+              } else if (response.error.includes('401')) {
+                errorMessage = 'Invalid API key. Please check your API key in settings.';
+              } else {
+                errorMessage = `Error: ${response.error}`;
+              }
+            }
+            reject(new Error(errorMessage));
+          } else {
+            resolve(response);
+          }
+        });
       });
-    });
-    
-    message = response.message;
-  } else {
-    // Generate message using AI directly
-    const response = await new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({
-        action: "generateMessage",
-        ClientData: clientProfile,
-        RecipientData: currentProfileData,
-        template: messageType,
-        apiKey: apiKey
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else if (!response.success) {
-          reject(new Error(response.error || 'Failed to generate message'));
-        } else {
-          resolve(response);
-        }
+      
+      message = response.message;
+    } else {
+      // Generate message using AI directly
+      const response = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({
+          action: "generateMessage",
+          ClientData: clientProfile,
+          RecipientData: currentProfileData,
+          template: messageType,
+          apiKey: apiKey
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (!response.success) {
+            let errorMessage = 'Failed to generate message';
+            if (response.error) {
+              if (response.error.includes('503')) {
+                errorMessage = 'The AI service is temporarily unavailable. Please try again in a few moments.';
+              } else if (response.error.includes('429')) {
+                errorMessage = 'You have exceeded the rate limit. Please wait a moment before trying again.';
+              } else if (response.error.includes('401')) {
+                errorMessage = 'Invalid API key. Please check your API key in settings.';
+              } else {
+                errorMessage = `Error: ${response.error}`;
+              }
+            }
+            reject(new Error(errorMessage));
+          } else {
+            resolve(response);
+          }
+        });
       });
-    });
+      
+      message = response.message;
+    }
+
+    if (!message) {
+      throw new Error('No message was generated. Please try again.');
+    }
+
+    // Save the generated message
+    await saveGeneratedMessage(message, currentProfileData, messageType);
+
+    // Display the generated message
+    document.getElementById('message').textContent = message;
+    document.getElementById('messageContainer').classList.remove('hidden');
+    document.getElementById('messageOptions').classList.add('hidden');
     
-    message = response.message;
+    // Reset edit state when generating new message
+    isEditing = false;
+    document.getElementById('messageEdit').classList.add('hidden');
+    document.getElementById('message').classList.remove('hidden');
+    document.getElementById('editButton').classList.remove('hidden');
+    document.getElementById('saveEditButton').classList.add('hidden');
+  } catch (error) {
+    console.error('Error in generateMessage:', error);
+    throw error; // Re-throw to be handled by the caller
   }
-
-  if (!message) {
-    throw new Error('No message was generated');
-  }
-
-  // Save the generated message
-  await saveGeneratedMessage(message, currentProfileData, messageType);
-
-  // Display the generated message
-  document.getElementById('message').textContent = message;
-  document.getElementById('messageContainer').classList.remove('hidden');
-  document.getElementById('messageOptions').classList.add('hidden');
 }
 
 // Add copy button handler
 document.getElementById('copyButton').addEventListener('click', async () => {
-  const messageText = document.getElementById('message').textContent;
+  const messageText = isEditing 
+    ? document.getElementById('messageEdit').value 
+    : document.getElementById('message').textContent;
   
   try {
     await navigator.clipboard.writeText(messageText);
@@ -650,5 +689,62 @@ document.getElementById('copyButton').addEventListener('click', async () => {
   } catch (error) {
     console.error('Failed to copy message:', error);
     alert('Failed to copy message to clipboard');
+  }
+});
+
+// Add edit button handler
+document.getElementById('editButton').addEventListener('click', () => {
+  const messageElement = document.getElementById('message');
+  const editElement = document.getElementById('messageEdit');
+  const editButton = document.getElementById('editButton');
+  const saveEditButton = document.getElementById('saveEditButton');
+  
+  // Switch to edit mode
+  isEditing = true;
+  
+  // Copy text to textarea
+  editElement.value = messageElement.textContent;
+  
+  // Show/hide elements
+  messageElement.classList.add('hidden');
+  editElement.classList.remove('hidden');
+  editButton.classList.add('hidden');
+  saveEditButton.classList.remove('hidden');
+  
+  // Focus textarea
+  editElement.focus();
+});
+
+// Add save edit button handler
+document.getElementById('saveEditButton').addEventListener('click', async () => {
+  const messageElement = document.getElementById('message');
+  const editElement = document.getElementById('messageEdit');
+  const editButton = document.getElementById('editButton');
+  const saveEditButton = document.getElementById('saveEditButton');
+  
+  // Get edited text
+  const editedMessage = editElement.value.trim();
+  
+  if (!editedMessage) {
+    alert('Message cannot be empty');
+    return;
+  }
+  
+  try {
+    // Save the edited message
+    await saveGeneratedMessage(editedMessage, currentProfileData, document.querySelector('input[name="messageType"]:checked').value);
+    
+    // Update display
+    messageElement.textContent = editedMessage;
+    
+    // Switch back to view mode
+    isEditing = false;
+    messageElement.classList.remove('hidden');
+    editElement.classList.add('hidden');
+    editButton.classList.remove('hidden');
+    saveEditButton.classList.add('hidden');
+  } catch (error) {
+    console.error('Error saving edited message:', error);
+    alert('Failed to save edited message');
   }
 });

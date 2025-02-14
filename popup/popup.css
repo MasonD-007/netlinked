@@ -542,7 +542,8 @@ button:hover i {
 
 /* Message actions container */
 .message-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-top: 16px;
 }
@@ -560,7 +561,7 @@ button:hover i {
   border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  flex: 1;
+  flex: unset;
   transition: background-color 0.2s ease;
 }
 
@@ -574,6 +575,56 @@ button:hover i {
 
 /* Update regenerate button to use flex: 1 */
 .regenerate-button {
-  flex: 1;
+  flex: unset;
   margin-top: 0; /* Remove margin since it's handled by message-actions */
+}
+
+/* Message edit textarea */
+.message-edit {
+  width: 100%;
+  min-height: 120px;
+  margin: 8px 0;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-background);
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.message-edit:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-color-light);
+}
+
+/* Edit and Save buttons */
+.edit-button,
+.save-edit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: unset;
+  transition: background-color 0.2s ease;
+}
+
+.edit-button:hover,
+.save-edit-button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.edit-button i,
+.save-edit-button i {
+  font-size: 14px;
 }

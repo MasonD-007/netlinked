@@ -51,6 +51,12 @@
                 <select id="chatProfileSelect" class="settings-select">
                   <option value="">Choose a profile to discuss...</option>
                 </select>
+                
+                <h3 style="margin-top: 20px;">AI Model</h3>
+                <select id="chatModelSelect" class="settings-select">
+                  <option value="gemini-1.5-flash">Gemini</option>
+                  <option value="gpt-4">ChatGPT</option>
+                </select>
               </div>
               <div class="chat-main">
                 <div class="chat-messages" id="chatMessages">
@@ -116,7 +122,6 @@
                         <select id="aiApiSelect" class="settings-select">
                             <option value="gemini">Gemini</option>
                             <option value="chatgpt">ChatGPT (Coming Soon)</option>
-                            <option value="claude">Claude (Coming Soon)</option>
                         </select>
                         <input type="text" id="aiApiKey" placeholder="Enter API Key">
                         <button id="saveApiKeyBtn">Save</button>

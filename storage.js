@@ -154,6 +154,27 @@ async function printProfile(savedAt) {
 
 async function saveGeneratedMessage(message, RecipientData, messageType) {
   try {
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.error('Invalid message: message is empty or not a string');
+      return false;
+    }
+
+    // Validate RecipientData
+    if (!RecipientData) {
+      console.error('Invalid RecipientData: RecipientData is null or undefined');
+      return false;
+    }
+
+    // Ensure RecipientData has the necessary properties with fallbacks
+    const recipientName = RecipientData.name || 'LinkedIn User';
+    const recipientUrl = RecipientData.profileURL || RecipientData.profileUrl || RecipientData.url || 'unknown';
+    
+    // Validate messageType
+    if (!messageType) {
+      console.warn('No messageType provided, using default');
+      messageType = 'general-connection-message';
+    }
+
     // Get existing messages first
     const result = await chrome.storage.local.get('generatedMessages');
     const existingMessages = result.generatedMessages || [];
@@ -161,11 +182,13 @@ async function saveGeneratedMessage(message, RecipientData, messageType) {
     // Create new message object with timestamp
     const newMessage = {
       message: message,
-      RecipientName: RecipientData.name,
-      RecipientUrl: RecipientData.profileURL,
+      RecipientName: recipientName,
+      RecipientUrl: recipientUrl,
       messageType: messageType,
       timestamp: new Date().toISOString()
     };
+    
+    console.log('Saving message:', newMessage);
     
     // Add new message to the beginning of the array
     existingMessages.unshift(newMessage);

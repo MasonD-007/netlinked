@@ -51,13 +51,17 @@ chrome.tabs.query({ active: true, currentWindow: true }, async function(tabs) {
           throw new Error('Please save your profile first to enable profile comparison.');
         }
 
+        // Define the AI model to use (default to gemini)
+        const selectedApi = document.querySelector('input[name="aiApi"]:checked')?.value || 'gemini';
+
         // Generate the summary
         const response = await new Promise((resolve, reject) => {
           chrome.runtime.sendMessage({
             action: "generateSummary",
             profileData: currentProfileData,
             ClientData: clientProfile,
-            apiKey: apiKey
+            apiKey: apiKey,
+            model: selectedApi === 'chatgpt' ? 'gpt-4' : 'gemini-1.5-flash'
           }, (response) => {
             if (chrome.runtime.lastError) {
               reject(new Error(chrome.runtime.lastError.message));
@@ -305,7 +309,6 @@ document.getElementById('saveApiKeyButton').addEventListener('click', async () =
 // Update the API key check section
 let geminiKey = await getAIApiKey('gemini');
 let chatgptKey = await getAIApiKey('chatgpt');
-let claudeKey = await getAIApiKey('claude');
 
 // Show settings section if Gemini key is not set
 if (geminiKey == null) {
@@ -317,13 +320,6 @@ document.querySelectorAll('input[name="aiApi"]').forEach(radio => {
   if (radio.value === 'chatgpt' && chatgptKey == null) {
     radio.disabled = true;
     document.querySelectorAll('#chatgpt-key-required').forEach(element => {
-      element.classList.remove('hidden');
-    });
-  }
-  
-  if (radio.value === 'claude' && claudeKey == null) {
-    radio.disabled = true;
-    document.querySelectorAll('#claude-key-required').forEach(element => {
       element.classList.remove('hidden');
     });
   }
@@ -584,7 +580,8 @@ async function generateMessage(selectedApi, messageType, templateSource) {
           ClientData: clientProfile,
           RecipientData: currentProfileData,
           template: { ...template, content: processedTemplate },
-          apiKey: apiKey
+          apiKey: apiKey,
+          model: selectedApi === 'chatgpt' ? 'gpt-4' : 'gemini-1.5-flash'
         }, (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
@@ -617,7 +614,8 @@ async function generateMessage(selectedApi, messageType, templateSource) {
           ClientData: clientProfile,
           RecipientData: currentProfileData,
           template: messageType,
-          apiKey: apiKey
+          apiKey: apiKey,
+          model: selectedApi === 'chatgpt' ? 'gpt-4' : 'gemini-1.5-flash'
         }, (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
@@ -648,8 +646,28 @@ async function generateMessage(selectedApi, messageType, templateSource) {
       throw new Error('No message was generated. Please try again.');
     }
 
+    console.log('Generated message:', message);
+    console.log('Current profile data:', currentProfileData);
+    
+    // Ensure currentProfileData has the necessary properties
+    if (!currentProfileData.name) {
+      console.warn('Profile data missing name, adding placeholder');
+      currentProfileData.name = 'LinkedIn User';
+    }
+    
+    // Ensure profileURL exists
+    if (!currentProfileData.profileURL) {
+      console.warn('Profile URL missing, adding current URL');
+      // Get current tab URL
+      const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      currentProfileData.profileURL = currentTab ? currentTab.url : 'unknown';
+    }
+
     // Save the generated message
-    await saveGeneratedMessage(message, currentProfileData, messageType);
+    const saveResult = await saveGeneratedMessage(message, currentProfileData, messageType);
+    if (!saveResult) {
+      console.error('Failed to save generated message');
+    }
 
     // Display the generated message
     document.getElementById('message').textContent = message;
@@ -731,8 +749,36 @@ document.getElementById('saveEditButton').addEventListener('click', async () => 
   }
   
   try {
+    // Check if currentProfileData exists and has the required properties
+    if (!currentProfileData) {
+      console.error('No profile data available');
+      alert('Profile data is missing. Please try generating the message again.');
+      return;
+    }
+    
+    // Ensure currentProfileData has the necessary properties
+    if (!currentProfileData.name) {
+      console.warn('Profile data missing name, adding placeholder');
+      currentProfileData.name = 'LinkedIn User';
+    }
+    
+    // Ensure profileURL exists
+    if (!currentProfileData.profileURL) {
+      console.warn('Profile URL missing, adding current URL');
+      // Get current tab URL
+      const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      currentProfileData.profileURL = currentTab ? currentTab.url : 'unknown';
+    }
+    
+    // Get the message type
+    const messageType = document.querySelector('input[name="messageType"]:checked')?.value || 'general-connection-message';
+    
     // Save the edited message
-    await saveGeneratedMessage(editedMessage, currentProfileData, document.querySelector('input[name="messageType"]:checked').value);
+    const saveResult = await saveGeneratedMessage(editedMessage, currentProfileData, messageType);
+    
+    if (!saveResult) {
+      throw new Error('Failed to save message');
+    }
     
     // Update display
     messageElement.textContent = editedMessage;
@@ -745,6 +791,6 @@ document.getElementById('saveEditButton').addEventListener('click', async () => 
     saveEditButton.classList.add('hidden');
   } catch (error) {
     console.error('Error saving edited message:', error);
-    alert('Failed to save edited message');
+    alert('Failed to save edited message: ' + error.message);
   }
 });

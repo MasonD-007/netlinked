@@ -226,12 +226,10 @@ async function loadSettings() {
         try {
             const geminiKey = await getAIApiKey('gemini');
             const chatgptKey = await getAIApiKey('chatgpt');
-            const claudeKey = await getAIApiKey('claude');
 
             console.log('Saved API Keys:', {
                 'Gemini': geminiKey || 'Not set',
-                'ChatGPT': chatgptKey || 'Not set',
-                'Claude': claudeKey || 'Not set'
+                'ChatGPT': chatgptKey || 'Not set'
             });
         } catch (error) {
             console.error('Error fetching API keys:', error);
@@ -863,6 +861,16 @@ async function loadChatProfiles() {
         select.appendChild(option);
     });
 
+    // Check if ChatGPT API key is available
+    const chatgptKey = await getAIApiKey('chatgpt');
+    const modelSelect = document.getElementById('chatModelSelect');
+    const chatgptOption = modelSelect.querySelector('option[value="gpt-4"]');
+    
+    if (!chatgptKey && chatgptOption) {
+        chatgptOption.disabled = true;
+        chatgptOption.textContent = 'ChatGPT (API Key Required)';
+    }
+
     // Initialize chat UI
     await initializeChat();
 
@@ -997,8 +1005,11 @@ async function sendChatMessage() {
             throw new Error('Please set up your Gemini API key in the Settings tab first.');
         }
 
+        // Get the selected AI model
+        const selectedModel = document.getElementById('chatModelSelect')?.value || 'gemini-1.5-flash';
+
         // Call Gemini API with conversation history
-        const response = await callGeminiChat(message, selectedProfile, clientProfile, apiKey, history);
+        const response = await callGeminiChat(message, selectedProfile, clientProfile, apiKey, history, selectedModel);
 
         // Remove loading indicator
         loadingDiv.remove();
@@ -1040,7 +1051,7 @@ async function sendChatMessage() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-async function callGeminiChat(message, selectedProfile, clientProfile, apiKey, history) {
+async function callGeminiChat(message, selectedProfile, clientProfile, apiKey, history, model = 'gemini-1.5-flash') {
     // Format the conversation history for the prompt
     const formattedHistory = history
         .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
@@ -1080,32 +1091,78 @@ async function callGeminiChat(message, selectedProfile, clientProfile, apiKey, h
     Format your response in a way that's easy to read and understand.`;
 
     try {
-        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+        let url, requestBody;
+        
+        if (model.startsWith('gpt')) {
+            // ChatGPT API call
+            url = "https://api.openai.com/v1/chat/completions";
+            requestBody = JSON.stringify({
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that analyzes LinkedIn profiles."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1024
+            });
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: requestBody
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.choices?.[0]?.message?.content) {
+                throw new Error("Invalid response format from ChatGPT API");
+            }
+            
+            return data.choices[0].message.content;
+        } else {
+            // Gemini API call
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+            requestBody = JSON.stringify({
                 "contents": [{
                     "parts": [{
                         "text": prompt
                     }]
                 }]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+            });
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: requestBody
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                throw new Error("Invalid response format from Gemini API");
+            }
+            
+            return data.candidates[0].content.parts[0].text;
         }
-
-        const data = await response.json();
-        
-        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            throw new Error("Invalid response format from Gemini API");
-        }
-
-        return data.candidates[0].content.parts[0].text;
     } catch (error) {
         console.error("Error in callGeminiChat:", error);
         throw new Error(`Failed to generate response: ${error.message}`);

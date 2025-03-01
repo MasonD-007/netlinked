@@ -70,7 +70,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     return;
                 }
 
-                const generatedMessage = await genMessage(message.ClientData, message.RecipientData, message.template, "gemini-1.5-flash", message.apiKey);
+                const generatedMessage = await genMessage(message.ClientData, message.RecipientData, message.template, message.model || "gemini-1.5-flash", message.apiKey);
                 if (!generatedMessage) {
                     throw new Error("No message was generated");
                 }
@@ -101,7 +101,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                 const generatedSummary = await generateSummary(
                     message.profileData,
-                    "gemini-1.5-flash",
+                    message.model || "gemini-1.5-flash",
                     message.apiKey,
                     message.ClientData
                 );
@@ -293,7 +293,7 @@ async function genMessage(ClientData, RecipientData, template, model, apiKey) {
 }
 
 async function callGemini(ClientData, RecipientData, template, model, apiKey) {
-    console.log("Calling Gemini with model:", model);
+    console.log("Calling AI with model:", model);
     
     let promptText;
     if (typeof template === 'object' && template.content) {
@@ -301,12 +301,27 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
         promptText = `
         You are enhancing a template message for LinkedIn based on the following information:
 
+        CRITICAL CONSTRAINT:
+        - LinkedIn connection messages have a STRICT 300 CHARACTER LIMIT (not words, characters including spaces)
+        - Your response MUST be under 300 characters total
+
         Rules:
         - Keep the message professional but friendly
         - Maintain the original template's structure and intent
         - Personalize the message using the provided profile information
-        - Keep the word count under 300 characters
+        - Be extremely concise - every character counts
+        - Focus on 1-2 key connection points only
+        - Remove any unnecessary words or phrases
         - Replace any placeholders with appropriate information
+
+        ${template.content.includes('recruiter') || template.name?.includes('recruiter') ? `
+        SPECIAL INSTRUCTIONS FOR RECRUITER MESSAGE:
+        - Express genuine interest in the specific job or company
+        - Briefly mention 1-2 relevant qualifications that match the recruiter's focus
+        - Convey enthusiasm and eagerness for the opportunity
+        - Avoid generic phrases like "I'm interested in opportunities"
+        - Be specific about why you want THIS job/company
+        ` : ''}
 
         Template Content:
         ${template.content}
@@ -323,16 +338,38 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
         - Current Role: ${RecipientData.currentRole || 'Not provided'}
         - Skills: ${RecipientData.skills ? RecipientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
-        Please enhance and personalize this template message while maintaining its original intent.`;
+        Example of good length (under 300 characters):
+        "Hi [Name], I noticed we both work in [industry]. I'm currently [brief role description] and would love to connect to share insights about [specific topic]. Thanks, [Your Name]"
+
+        Please enhance and personalize this template message while maintaining its original intent. Count your characters carefully before submitting.`;
     } else {
         // AI-generated message
         promptText = `
-        You are writing a personalized message on LinkedIn based on the following information:
+        You are writing a personalized LinkedIn connection message with a STRICT 300 CHARACTER LIMIT.
 
-        Rules:
-        - The message should be professional but friendly, and reference their shared professional interests or skills where relevant.
-        - Keep the message concise and engaging.
-        - The word count cant be more than 300 characters.
+        CRITICAL CONSTRAINTS:
+        - LinkedIn connection messages have a STRICT 300 CHARACTER LIMIT (not words, characters including spaces)
+        - Your response MUST be under 300 characters total
+        - Count every character including spaces and punctuation
+
+        Connection Type: ${template}
+
+        Rules for effective short messages:
+        - Start with a brief, personalized greeting
+        - Focus on ONE specific connection point (shared skill, industry, or interest)
+        - Include a clear reason for connecting
+        - End with a simple, friendly closing
+        - Remove any unnecessary words or phrases
+        - Avoid generic statements that waste characters
+
+        ${template === 'message-to-recruiter' ? `
+        SPECIAL INSTRUCTIONS FOR RECRUITER MESSAGE:
+        - Express genuine interest in the specific job or company
+        - Briefly mention 1-2 relevant qualifications that match the recruiter's focus
+        - Convey enthusiasm and eagerness for the opportunity
+        - Avoid generic phrases like "I'm interested in opportunities"
+        - Be specific about why you want THIS job/company
+        ` : ''}
 
         Client (Sender) Information:
         - Name: ${ClientData.name || 'Not provided'}
@@ -346,21 +383,64 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
         - Current Role: ${RecipientData.currentRole || 'Not provided'}
         - Skills: ${RecipientData.skills ? RecipientData.skills.map(s => s.skill).join(', ') : 'Not provided'}
 
-        Template Type: ${template}
+        Examples of good length (under 300 characters):
+        1. "Hi [Name], I noticed we both have experience in [specific skill]. I'm currently working on [brief project] and would love to connect to share insights. Thanks, [Your Name]"
+        2. "Hi [Name], I saw your work on [specific project/company]. As a fellow [industry] professional, I'd love to connect and learn more about your experience. Best, [Your Name]"
+        ${template === 'message-to-recruiter' ? `
+        3. "Hi [Name], I'm excited about the [specific position] at [company]. My experience with [relevant skill] aligns perfectly with what you're seeking. I'd love to discuss how I can contribute to your team. Thanks, [Your Name]"
+        ` : ''}
 
-        Write a personalized ${template} message from ${ClientData.name || 'the sender'} to ${RecipientData.name || 'the recipient'}. 
-        Make it professional but friendly, and reference their shared professional interests or skills where relevant.
-        Keep the message concise and engaging.`;
+        Write a personalized ${template} message from ${ClientData.name || 'the sender'} to ${RecipientData.name || 'the recipient'}.
+        Count your characters carefully before submitting.`;
     }
 
     try {
-        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=" + apiKey;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+        let url, requestBody;
+        let generatedMessage;
+        
+        if (model.startsWith('gpt')) {
+            // ChatGPT API call
+            url = "https://api.openai.com/v1/chat/completions";
+            requestBody = JSON.stringify({
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that creates personalized LinkedIn connection messages."
+                    },
+                    {
+                        "role": "user",
+                        "content": promptText
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1024
+            });
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: requestBody
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.choices?.[0]?.message?.content) {
+                throw new Error("Invalid response format from ChatGPT API");
+            }
+            
+            generatedMessage = data.choices[0].message.content;
+        } else {
+            // Gemini API call
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+            requestBody = JSON.stringify({
                 "contents": [{
                     "role": "user",
                     "parts": [{
@@ -368,31 +448,74 @@ async function callGemini(ClientData, RecipientData, template, model, apiKey) {
                     }]
                 }],
                 "generationConfig": {
-                    "temperature": 1,
+                    "temperature": 0.7,
                     "topK": 40,
                     "topP": 0.95,
-                    "maxOutputTokens": 8192,
-                    "responseMimeType": "text/plain"
+                    "maxOutputTokens": 1024,
+                    "responseMimeType": "text/plain",
+                    "stopSequences": ["\"\"\""]
                 }
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+            });
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: requestBody
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            console.log("Gemini response:", data);
+            
+            if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                throw new Error("Invalid response format from Gemini API");
+            }
+            
+            generatedMessage = data.candidates[0].content.parts[0].text;
         }
-
-        const data = await response.json();
-        console.log("Gemini response:", data);
         
-        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            throw new Error("Invalid response format from Gemini API");
-        }
-
-        return data.candidates[0].content.parts[0].text;
+        // Validate and trim the message to ensure it's under 300 characters
+        generatedMessage = validateMessageLength(generatedMessage);
+        
+        return generatedMessage;
     } catch (error) {
         console.error("Error in callGemini:", error);
         throw new Error(`API call failed: ${error.message}`);
     }
+}
+
+// Function to validate and ensure message is under 300 characters
+function validateMessageLength(message) {
+    // Remove any markdown formatting that might have been added
+    let cleanMessage = message.replace(/\*\*/g, '').replace(/\*/g, '').replace(/\n/g, ' ').trim();
+    
+    // If message is already under 300 characters, return it
+    if (cleanMessage.length <= 300) {
+        return cleanMessage;
+    }
+    
+    // If message is over 300 characters, trim it and add ellipsis
+    console.warn(`Message exceeded 300 characters (${cleanMessage.length}). Trimming...`);
+    
+    // Try to find a good breaking point (end of sentence or comma)
+    let breakPoint = cleanMessage.lastIndexOf('.', 296);
+    if (breakPoint === -1 || breakPoint < 250) {
+        breakPoint = cleanMessage.lastIndexOf(',', 296);
+    }
+    if (breakPoint === -1 || breakPoint < 250) {
+        breakPoint = cleanMessage.lastIndexOf(' ', 296);
+    }
+    if (breakPoint === -1 || breakPoint < 250) {
+        // If no good breaking point, just cut at 296 characters
+        breakPoint = 296;
+    }
+    
+    return cleanMessage.substring(0, breakPoint).trim();
 }
 
 //End of generate message
@@ -405,6 +528,12 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     if (!ClientData) {
         throw new Error("Client profile data is required for comparison");
     }
+
+    // Check if the profile is likely a recruiter
+    const isRecruiter = profileData.headline?.toLowerCase().includes('recruit') || 
+                        profileData.headline?.toLowerCase().includes('talent') ||
+                        profileData.currentRole?.toLowerCase().includes('recruit') ||
+                        profileData.currentRole?.toLowerCase().includes('talent');
 
     const prompt = `
     Analyze this LinkedIn profile in relation to the client's profile and create a bullet-point summary to help decide if they want to connect with this person.
@@ -424,6 +553,13 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     Connection Value:
     • [1-2 points on why they might be a valuable connection based on shared interests/skills]
     • [Any unique value they could bring to your network]
+
+    ${isRecruiter ? `
+    Recruiter Insights:
+    • [What industries/roles they typically recruit for]
+    • [Companies they work with or represent]
+    • [How to best approach them for job opportunities]
+    ` : ''}
 
     Keep each bullet point concise and focus on what makes this person interesting as a potential connection.
     Do not use any markdown formatting like asterisks or bold text.
@@ -446,32 +582,78 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     `;
 
     try {
-        const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
+        let url, requestBody;
+        
+        if (model.startsWith('gpt')) {
+            // ChatGPT API call
+            url = "https://api.openai.com/v1/chat/completions";
+            requestBody = JSON.stringify({
+                "model": model,
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful assistant that analyzes LinkedIn profiles."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                "temperature": 0.7,
+                "max_tokens": 1024
+            });
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: requestBody
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.choices?.[0]?.message?.content) {
+                throw new Error("Invalid response format from ChatGPT API");
+            }
+            
+            return data.choices[0].message.content;
+        } else {
+            // Gemini API call
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+            requestBody = JSON.stringify({
                 "contents": [{ 
                     "parts": [{ 
                         "text": prompt 
                     }] 
                 }]
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`API request failed with status ${response.status}`);
+            });
+            
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: requestBody
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                throw new Error("Invalid response format from Gemini API");
+            }
+            
+            return data.candidates[0].content.parts[0].text;
         }
-
-        const data = await response.json();
-        
-        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            throw new Error("Invalid response format from Gemini API");
-        }
-
-        return data.candidates[0].content.parts[0].text;
     } catch (error) {
         console.error("Error in generateSummary:", error);
         throw new Error(`Failed to generate summary: ${error.message}`);

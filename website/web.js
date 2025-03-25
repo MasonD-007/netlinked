@@ -188,6 +188,21 @@ async function loadSettings() {
         }
     });
 
+    document.getElementById('aiApiSelect').addEventListener('change', function(e) {
+        const apiKeyInput = document.getElementById('aiApiKey');
+        const saveButton = document.getElementById('saveApiKeyBtn');
+        
+        if (e.target.value === 'chatgpt') {
+            apiKeyInput.disabled = true;
+            apiKeyInput.placeholder = 'ChatGPT integration coming soon...';
+            saveButton.disabled = true;
+        } else {
+            apiKeyInput.disabled = false;
+            apiKeyInput.placeholder = 'Enter API Key';
+            saveButton.disabled = false;
+        }
+    });
+
     // open the clints profile on linkedin
     document.querySelector('#clientProfileSection .open-profile-btn').addEventListener('click', (e) => {
         console.log("Opening client profile on LinkedIn");
@@ -219,21 +234,6 @@ async function loadSettings() {
         const isDarkMode = e.target.checked;
         document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
         chrome.storage.local.set({ 'darkMode': isDarkMode });
-    });
-
-    // Add this event listener
-    document.getElementById('testApiKeysBtn').addEventListener('click', async () => {
-        try {
-            const geminiKey = await getAIApiKey('gemini');
-            const chatgptKey = await getAIApiKey('chatgpt');
-
-            console.log('Saved API Keys:', {
-                'Gemini': geminiKey || 'Not set',
-                'ChatGPT': chatgptKey || 'Not set'
-            });
-        } catch (error) {
-            console.error('Error fetching API keys:', error);
-        }
     });
 
     // Add delete profiles event listener

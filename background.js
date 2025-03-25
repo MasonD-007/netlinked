@@ -538,6 +538,8 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     const prompt = `
     Analyze this LinkedIn profile in relation to the client's profile and create a bullet-point summary to help decide if they want to connect with this person.
     
+    IMPORTANT: Do not include any names in your summary.
+    
     Format your response in these exact sections with bullet points:
     
     Current Role & Level:
@@ -564,6 +566,7 @@ async function generateSummary(profileData, model, apiKey, ClientData) {
     Keep each bullet point concise and focus on what makes this person interesting as a potential connection.
     Do not use any markdown formatting like asterisks or bold text.
     Highlight any overlapping skills, industries, or experiences between the profiles.
+    Remember: Do not mention any names in the summary.
 
     Client (Your) Profile Information:
     - Name: ${ClientData.name}

@@ -246,6 +246,9 @@ body {
 /* Add these styles for radio buttons */
 input[type="radio"] {
   accent-color: var(--primary-color);
+  opacity: 1;
+  visibility: visible;
+  margin-right: 8px;
 }
 
 .messageOptions label {
@@ -367,6 +370,9 @@ button:hover i {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color);
+  display: block;
+  visibility: visible;
+  opacity: 1;
 }
 
 .template-source-select h3 {
@@ -382,6 +388,14 @@ button:hover i {
   gap: 8px;
   padding: 4px;
   cursor: pointer;
+  opacity: 1;
+  visibility: visible;
+}
+
+.template-source-select input[type="radio"] {
+  margin: 0;
+  opacity: 1;
+  visibility: visible;
 }
 
 #userTemplateSelect {

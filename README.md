@@ -2,6 +2,9 @@
 
 A Chrome extension for generating personalized LinkedIn connection messages using AI.
 
+## Single Purpose
+NetLinked serves one specific purpose: helping users create personalized connection messages on LinkedIn using AI. Every feature and permission in the extension supports this core functionality of generating and sending better connection requests.
+
 ## What is this?
 NetLinked is a tool that helps you connect with people on LinkedIn by generating thoughtful, personalized introduction messages. It leverages the Gemini API to analyze profiles and create relevant connection requests that stand out.
 
